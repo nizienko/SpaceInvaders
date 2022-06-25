@@ -1,7 +1,8 @@
 name: Prepare Draft Release
 on:
   push:
-    branches: ['release']
+    branches:
+      - master
 jobs:
   prepare-draft-release:
     name: Prepare Draft Release
