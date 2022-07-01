@@ -19,7 +19,7 @@ class Colors(private val level: Int) {
             ),
             listOf(
                 Color.LIGHT_GRAY,
-                Color(147, 65, 120),
+                Color(220, 120, 180),
                 Color(190, 245, 80),
                 Color(16, 170, 185),
                 Color(240, 80, 50),

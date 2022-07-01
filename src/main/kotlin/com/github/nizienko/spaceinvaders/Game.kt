@@ -77,9 +77,9 @@ class Game {
     private var gameOverTime: Long = 0L
     private var level = 1
     private lateinit var colors: Colors
-    private val centerText = Text(100, 800, 100, 170)
-    private val bottomText = Text(100, 1000, 100, 90)
-    private val bottomText2 = Text(100, 1200, 100, 90)
+    private val centerText = Text(100, 400, 100, 170)
+    private val bottomText = Text(100, 6000, 100, 90)
+    private val bottomText2 = Text(100, 800, 100, 90)
     private val levelText = Text(700, 40, 100, 40)
     private val killedCounterText = Text(1150, 40, 100, 40)
     private val killedRecordText = Text(1400, 40, 100, 40)
@@ -112,9 +112,13 @@ class Game {
     private fun prepareNewLevel() {
         level++
         display.clean()
-        display.addObject(health)
-        display.addObject(killedCounterText)
-        display.addObject(killedRecordText)
+        display.addObject(health, false)
+        display.addObject(killedCounterText, false)
+        display.addObject(killedRecordText, false)
+        with(display.camera) {
+            zoom = 1.7
+            zoomTarget = 1.0
+        }
         colors = Colors(level)
         health.defaultColours = colors
         centerText.defaultColours = colors
@@ -123,7 +127,7 @@ class Game {
         bottomText2.defaultColours = colors
         killedCounterText.defaultColours = colors
         killedRecordText.defaultColours = colors
-        display.addObject(levelText)
+        display.addObject(levelText, false)
         levelText.text = "level $level"
         bottomText.text = "press space to start"
         bottomText2.text = "move: ← →  fire: ↑"
@@ -160,11 +164,13 @@ class Game {
             defaultColours = colors
             this.totalKilled = killedCount
         }
+        display.camera.process(spaceShip.position)
+
         display.addObject(spaceShip)
         display.defaultColors = colors
-        display.addObject(centerText)
-        display.addObject(bottomText)
-        display.addObject(bottomText2)
+        display.addObject(centerText, false)
+        display.addObject(bottomText, false)
+        display.addObject(bottomText2, false)
         gameState = GameState.NEW
     }
 
@@ -187,6 +193,7 @@ class Game {
         }
         healers.forEach { it.process() }
         spaceShip.process()
+        display.camera.process(spaceShip.position)
         // check collisions
         spaceShipBullets.forEach { b ->
             invaders.forEach { i ->
@@ -198,6 +205,7 @@ class Game {
                     val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
+                    display.camera.zoom += 0.005
                     killedCounterText.text = "killed: $killedCount"
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
@@ -213,6 +221,7 @@ class Game {
             if (spaceShip.isObjectHit(b)) {
                 val spaceShipExplosion = SpaceShipExplosionAnimation(b.position.x, b.position.y)
                 animations.add(spaceShipExplosion)
+                display.camera.zoom += 0.03
                 b.isOut = true
                 health.value -= 10
                 if (health.value <= 0) {
@@ -235,6 +244,7 @@ class Game {
         healers.forEach { h ->
             if (spaceShip.isObjectHit(h)) {
                 health.value += 10
+                display.camera.zoom -= 0.02
                 if (health.value > 100) {
                     health.value = 100
                 }
@@ -254,7 +264,10 @@ class Game {
         invadersMovements.xSpeed = 5 - (invaders.count().toDouble() / 10) + level
 
         // win?
-        if (invaders.isEmpty()) gameState = GameState.WIN
+        if (invaders.isEmpty()) {
+            gameState = GameState.WIN
+            display.camera.zoomTarget = 1.7
+        }
         // lose?
         if (health.value <= 0) gameOver()
     }
@@ -279,7 +292,7 @@ class Game {
                     }
 
                     GameState.PAUSE -> {
-                        centerText.text = "pause"
+                        bottomText2.text = "pause"
                         display.repaint()
                         Thread.sleep(500)
                     }
@@ -311,6 +324,7 @@ class Game {
 
     private fun gameOver() {
         gameState = GameState.GAME_OVER
+        display.camera.zoomTarget = 0.8
     }
 }
 
