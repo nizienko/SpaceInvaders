@@ -21,6 +21,6 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v3
         with:
-          name: autokey-plugin
+          name: SpaceInvaders-plugin
           path: |
             build/distributions/SpaceInvaders-*.zip
