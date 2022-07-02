@@ -19,15 +19,11 @@ class Game {
         const val FRAME_RATE = 30
         fun millisToFrames(millis: Long) = millis * (FRAME_RATE.toDouble() / 1000.0)
     }
-    // with levels, we increase speed and bullets, different colors
 
     val display: GameDisplay = GameDisplay(1600, 1400).apply {
         font = UIUtil.getLabelFont(UIUtil.FontSize.NORMAL)
         addFocusListener(object : FocusListener {
             override fun focusGained(e: FocusEvent?) {
-//                if (gameState == GameState.PAUSE) {
-//                    gameState = GameState.PLAY
-//                }
             }
 
             override fun focusLost(e: FocusEvent?) {
@@ -78,7 +74,7 @@ class Game {
     private var level = 1
     private lateinit var colors: Colors
     private val centerText = Text(100, 400, 100, 170)
-    private val bottomText = Text(100, 6000, 100, 90)
+    private val bottomText = Text(100, 600, 100, 90)
     private val bottomText2 = Text(100, 800, 100, 90)
     private val levelText = Text(700, 40, 100, 40)
     private val killedCounterText = Text(1150, 40, 100, 40)
@@ -205,7 +201,7 @@ class Game {
                     val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
-                    display.camera.zoom += 0.005
+                    display.camera.zoom += 1.0 / invaders.size.toDouble() / 10.0
                     killedCounterText.text = "killed: $killedCount"
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
@@ -221,7 +217,7 @@ class Game {
             if (spaceShip.isObjectHit(b)) {
                 val spaceShipExplosion = SpaceShipExplosionAnimation(b.position.x, b.position.y)
                 animations.add(spaceShipExplosion)
-                display.camera.zoom += 0.03
+                display.camera.zoom += 0.06
                 b.isOut = true
                 health.value -= 10
                 if (health.value <= 0) {
@@ -244,7 +240,7 @@ class Game {
         healers.forEach { h ->
             if (spaceShip.isObjectHit(h)) {
                 health.value += 10
-                display.camera.zoom -= 0.02
+                display.camera.zoom -= 0.01
                 if (health.value > 100) {
                     health.value = 100
                 }

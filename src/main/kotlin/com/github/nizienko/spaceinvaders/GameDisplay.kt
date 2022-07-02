@@ -126,11 +126,11 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
 //            if (y + gameHeight.toDouble() / zoom > gameHeight) y =
 //                (gameHeight - (gameHeight.toDouble() / zoom).roundToInt())
             if (zoom > zoomTarget) {
-                var step = (zoom - zoomTarget) / 8.0
+                var step = (zoom - zoomTarget) / 10.0
                 zoom -= step
             }
             if (zoom < zoomTarget) {
-                var step = (zoomTarget - zoom) / 8.0
+                var step = (zoomTarget - zoom) / 10.0
                 zoom += step
             }
         }
