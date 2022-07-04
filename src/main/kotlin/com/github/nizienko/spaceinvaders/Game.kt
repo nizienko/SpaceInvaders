@@ -201,7 +201,7 @@ class Game {
                     val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
-                    display.camera.zoom += 1.0 / invaders.size.toDouble() / 10.0
+                    display.camera.zoom += 1.0 / invaders.size.toDouble() / 15.0
                     killedCounterText.text = "killed: $killedCount"
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
@@ -217,7 +217,7 @@ class Game {
             if (spaceShip.isObjectHit(b)) {
                 val spaceShipExplosion = SpaceShipExplosionAnimation(b.position.x, b.position.y)
                 animations.add(spaceShipExplosion)
-                display.camera.zoom += 0.06
+                display.camera.zoom += 0.03
                 b.isOut = true
                 health.value -= 10
                 if (health.value <= 0) {
