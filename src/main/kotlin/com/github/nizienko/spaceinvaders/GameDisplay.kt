@@ -117,12 +117,13 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
             x = newX
             y = newY
 
-            val step = (zoom - zoomTarget) / 10.0
 
             if (zoom > zoomTarget) {
+                val step = (zoom - zoomTarget) / 10.0
                 zoom -= step
             }
             if (zoom < zoomTarget) {
+                val step = (zoomTarget - zoom) / 10.0
                 zoom += step
             }
         }
