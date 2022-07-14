@@ -6,7 +6,6 @@ abstract class Animation: GameObject() {
     protected var faze: Int = 0
 
     private var finished = false
-    fun isFinished() = finished
 
     abstract val durationMs: Long
 

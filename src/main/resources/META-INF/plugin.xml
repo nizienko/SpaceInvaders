@@ -33,6 +33,8 @@
                 extensions="invaders"/>
         <applicationService
                 serviceImplementation="com.github.nizienko.spaceinvaders.SpaceInvadersState"/>
+        <postStartupActivity
+                implementation="com.github.nizienko.spaceinvaders.RegisterInvaderShowingInStatusBarActivity"/>
     </extensions>
     <actions>
         <action id="com.github.nizienko.spaceinvaders.OpenGameAction"
