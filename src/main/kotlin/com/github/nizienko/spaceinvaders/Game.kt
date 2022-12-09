@@ -206,7 +206,7 @@ class Game {
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
                     }
-                    if (Random.nextInt(80) == 1) {
+                    if (Random.nextInt(30) == 1) {
                         val heal = Healer(i.position.x, i.position.y, display.gameHeight)
                         healers.add(heal)
                     }
