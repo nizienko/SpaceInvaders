@@ -2,10 +2,6 @@ package com.github.nizienko.spaceinvaders.objects
 
 import com.github.nizienko.spaceinvaders.CanExpired
 import com.github.nizienko.spaceinvaders.Colors
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.util.ui.UIUtil.FontColor
-import org.apache.batik.css.engine.value.css2.FontFamilyManager
 import java.awt.*
 import kotlin.math.roundToInt
 

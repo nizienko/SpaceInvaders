@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskListener
@@ -26,10 +27,10 @@ internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, Dumb
         val widget = SpaceInvadersWidget()
         val show = {
             if (statusBar.getWidget(widget.ID()) == null) {
+                // todo: Use StatusBarWidgetFactory
                 statusBar.addWidget(
                     widget,
-                    StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL),
-                    statusBar
+                    StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL)
                 )
             }
         }
