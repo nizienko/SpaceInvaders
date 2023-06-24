@@ -90,11 +90,11 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
     private var acceleration: Double = 0.0
 
     fun moveLeft() {
-        acceleration -= 20
+        acceleration -= 10
     }
 
     fun moveRight() {
-        acceleration += 20
+        acceleration += 10
     }
 
     private var phase = 0

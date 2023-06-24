@@ -112,7 +112,7 @@ class Game {
         display.addObject(killedCounterText, false)
         display.addObject(killedRecordText, false)
         with(display.camera) {
-            zoom = 1.7
+            zoom = 1.8
             zoomTarget = 1.0
         }
         colors = Colors(level)
@@ -132,14 +132,16 @@ class Game {
         invadersMovements = InvadersMovements()
         invaders.apply {
             clear()
+            var n = 1
             (0..11).forEach { c ->
                 (0..4).forEach { r ->
-                    val invader = Invader(c * 100, r * 100)
+                    val invader = Invader(c * 100, r * 100, n)
+                    n++
                     invader.move(invadersMovements.getPoint())
                     invader.totalInvadersLeft = invaders.size
                     invader.defaultColours = colors
                     invader.fire = { x, y ->
-                        val bullet = Bullet(x, y, true, display.gameHeight)
+                        val bullet = Bullet(x, y, true, display.gameHeight, 20)
                         bullet.defaultColours = colors
                         invadersBullets.add(bullet)
                     }
@@ -201,12 +203,12 @@ class Game {
                     val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
-                    display.camera.zoom += 1.0 / invaders.size.toDouble() / 15.0
+                    display.camera.zoom += 0.7 / invaders.size.toDouble() / 15.0
                     killedCounterText.text = "killed: $killedCount"
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
                     }
-                    if (Random.nextInt(30) == 1) {
+                    if (Random.nextInt(75) == 1) {
                         val heal = Healer(i.position.x, i.position.y, display.gameHeight)
                         healers.add(heal)
                     }
@@ -217,7 +219,7 @@ class Game {
             if (spaceShip.isObjectHit(b)) {
                 val spaceShipExplosion = SpaceShipExplosionAnimation(b.position.x, b.position.y)
                 animations.add(spaceShipExplosion)
-                display.camera.zoom += 0.03
+                display.camera.zoom += 0.01
                 b.isOut = true
                 health.value -= 10
                 if (health.value <= 0) {

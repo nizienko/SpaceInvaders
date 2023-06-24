@@ -15,7 +15,7 @@ class Healer(private var x: Int, private var y: Int, private val maxY: Int) : Ga
         rect(0, 1, 3, 1)
         rect(1, 0, 1, 3)
     }
-    private val speed = 20
+    private val speed = 13
     override fun process() {
         y += speed
         if (y >= maxY) isOut = true

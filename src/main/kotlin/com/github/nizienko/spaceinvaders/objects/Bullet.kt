@@ -3,10 +3,11 @@ package com.github.nizienko.spaceinvaders.objects
 import java.awt.Point
 
 class Bullet(
-    private var x: Int,
-    private var y: Int,
-    private val isDownDirection: Boolean = false,
-    private val maxY: Int = 0
+        private var x: Int,
+        private var y: Int,
+        private val isDownDirection: Boolean = false,
+        private val maxY: Int = 0,
+        private val speed: Int = 30
 ) : GameObject() {
     override val position: Point
         get() = Point(x, y)
@@ -29,12 +30,12 @@ class Bullet(
     var isOut = false
     fun move() {
         if (isDownDirection) {
-            y += 30
+            y += speed
             if (y > maxY) {
                 isOut = true
             }
         } else {
-            y -= 30
+            y -= speed
             if (y < 0) {
                 isOut = true
             }

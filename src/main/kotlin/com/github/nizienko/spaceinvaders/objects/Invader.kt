@@ -4,7 +4,7 @@ import com.github.nizienko.spaceinvaders.CanExpired
 import java.awt.Point
 import kotlin.random.Random
 
-class Invader(private val shiftX: Int, private val shiftY: Int) : GameObject() {
+class Invader(private val shiftX: Int, private val shiftY: Int, private val n: Int) : GameObject() {
     private var x: Int = 10 + shiftX
     private var y: Int = 10 + shiftY
     override val position: Point
@@ -53,13 +53,13 @@ class Invader(private val shiftX: Int, private val shiftY: Int) : GameObject() {
         phase++
         if (phase > 9) phase = 0
         val shotSpeed = when {
-            totalInvadersLeft < 5 -> 100
+            totalInvadersLeft < 5 -> 130
             totalInvadersLeft < 10 -> 200
             totalInvadersLeft < 20 -> 500
             totalInvadersLeft < 30 -> 900
             else -> 1000
         }
-        if (Random.nextInt(shotSpeed) == 1) fire(x, y)
+        if (Random.nextInt(shotSpeed) == shotSpeed / 60 * n) fire(x, y)
     }
 
 
