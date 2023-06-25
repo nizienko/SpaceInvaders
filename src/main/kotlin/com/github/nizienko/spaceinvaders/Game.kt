@@ -1,6 +1,10 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.*
+import com.github.nizienko.spaceinvaders.objects.bonuses.Bonus
+import com.github.nizienko.spaceinvaders.objects.bonuses.BulletSpeed
+import com.github.nizienko.spaceinvaders.objects.bonuses.Healer
+import com.github.nizienko.spaceinvaders.objects.bonuses.HealerFull
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Point
@@ -64,9 +68,10 @@ class Game {
     private val invaders = GameObjects<Invader>(display)
     private val spaceShipBullets = GameObjects<Bullet>(display)
     private val invadersBullets = GameObjects<Bullet>(display)
-    private val healers = GameObjects<Healer>(display)
+    private val bonuses = GameObjects<Bonus>(display)
     private val animations = GameObjects<Animation>(display)
-    private lateinit var health: HealthLevel
+    private lateinit var health: ProgressLevel
+    private lateinit var bulletSpeed: ProgressLevel
 
     private lateinit var spaceShip: SpaceShip
 
@@ -81,6 +86,26 @@ class Game {
     private val killedRecordText = Text(1400, 40, 100, 40)
     private var killedCount = 0
     private var killedRecord = 0
+
+    inner class GameModifiers {
+        var spaceShipHealth: Int
+            get() = health.value
+            set(value) {
+                health.value = value
+            }
+
+        var spaceShipBulletSpeed
+            get() = bulletSpeed.value
+            set(value) {
+                bulletSpeed.value = value
+            }
+
+        fun shakeCamera(value: Double) {
+            display.camera.zoom -= value
+        }
+    }
+    val gameModifiers = GameModifiers()
+
 
     init {
         prepareNewGame()
@@ -98,7 +123,8 @@ class Game {
     }
 
     private fun prepareNewGame() {
-        health = HealthLevel()
+        health = ProgressLevel("health", Point(300, 65), 100, 0, 100)
+        bulletSpeed = ProgressLevel("bullet speed", Point(300, 20), 20, 20, 60)
         level = 0
         killedCount = 0
         killedRecord = SpaceInvadersState.getInstance().recordKills
@@ -109,6 +135,7 @@ class Game {
         level++
         display.clean()
         display.addObject(health, false)
+        display.addObject(bulletSpeed, false)
         display.addObject(killedCounterText, false)
         display.addObject(killedRecordText, false)
         with(display.camera) {
@@ -117,6 +144,7 @@ class Game {
         }
         colors = Colors(level)
         health.defaultColours = colors
+        bulletSpeed.defaultColours = colors
         centerText.defaultColours = colors
         levelText.defaultColours = colors
         bottomText.defaultColours = colors
@@ -152,10 +180,10 @@ class Game {
         spaceShipBullets.clear()
         invadersBullets.clear()
         animations.clear()
-        healers.clear()
+        bonuses.clear()
         spaceShip = SpaceShip(800, 1300, display.gameWidth).apply {
             fireFunction = { x, y ->
-                val bullet = Bullet(x, y - spaceShip.height / 2)
+                val bullet = Bullet(x, y - spaceShip.height / 2, speed = gameModifiers.spaceShipBulletSpeed)
                 bullet.defaultColours = colors
                 spaceShipBullets.add(bullet)
             }
@@ -172,7 +200,7 @@ class Game {
         gameState = GameState.NEW
     }
 
-
+    private var lastTimeBulletSpeedDecreased = System.currentTimeMillis()
     private fun process() {
         // move objects
         spaceShipBullets.forEach {
@@ -189,7 +217,7 @@ class Game {
             it.process()
             it.totalInvadersLeft = invaders.size
         }
-        healers.forEach { it.process() }
+        bonuses.forEach { it.process() }
         spaceShip.process()
         display.camera.process(spaceShip.position)
         // check collisions
@@ -208,9 +236,13 @@ class Game {
                     if (killedCount > killedRecord) {
                         SpaceInvadersState.getInstance().recordKills = killedCount
                     }
-                    if (Random.nextInt(75) == 1) {
-                        val heal = Healer(i.position.x, i.position.y, display.gameHeight)
-                        healers.add(heal)
+                    if (Random.nextInt(55) == 1) {
+                        bonuses.add(Healer(i.position.x, i.position.y, display.gameHeight))
+                    } else if ((Random.nextInt(90) == 1)) {
+                        bonuses.add(HealerFull(i.position.x, i.position.y, display.gameHeight))
+                    }
+                    if (Random.nextInt(45) == 1) {
+                        bonuses.add(BulletSpeed(i.position.x, i.position.y, display.gameHeight))
                     }
                 }
             }
@@ -239,23 +271,24 @@ class Game {
                 gameOverTime = System.currentTimeMillis()
             }
         }
-        healers.forEach { h ->
+        bonuses.forEach { h ->
             if (spaceShip.isObjectHit(h)) {
-                health.value += 10
-                display.camera.zoom -= 0.01
-                if (health.value > 100) {
-                    health.value = 100
-                }
+                h.applyBonus(gameModifiers)
                 h.isOut = true
             }
         }
         animations.forEach { it.process() }
 
+        if (lastTimeBulletSpeedDecreased + 10_000 < System.currentTimeMillis()) {
+            lastTimeBulletSpeedDecreased = System.currentTimeMillis()
+            bulletSpeed.value -= 2
+        }
+
         // clean
         invadersBullets.deleteExpired()
         invaders.deleteExpired()
         animations.deleteExpired()
-        healers.deleteExpired()
+        bonuses.deleteExpired()
         spaceShipBullets.deleteExpired()
 
         // set speed
@@ -266,7 +299,7 @@ class Game {
             gameState = GameState.WIN
             display.camera.zoomTarget = 1.7
         }
-        // lose?
+        // lost?
         if (health.value <= 0) gameOver()
     }
 
