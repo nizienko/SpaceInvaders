@@ -1,9 +1,16 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.GameObject
-import java.awt.*
-import java.awt.event.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
+import java.awt.image.BufferedImage
 import javax.swing.JPanel
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 
@@ -53,21 +60,23 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
 
     override fun paint(g: Graphics?) {
         if (g != null && g is Graphics2D) {
-            g.background = defaultColors.background
-            g.clearRect(0, 0, width, height)
+            val gameImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+            val imageGraphics = gameImage.createGraphics()
+            imageGraphics.background = defaultColors.background
+            imageGraphics.clearRect(0, 0, width, height)
             gameObjects.forEach {
                 val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
                 val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
                 val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
                 val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
                 it.paint(
-                    g,
-                    Point(
-                        realX.roundToInt() - (realWidth / 2).roundToInt(),
-                        realY.roundToInt() - (realHeight / 2).roundToInt()
-                    ),
-                    realWidth.roundToInt(),
-                    realHeight.roundToInt()
+                        imageGraphics,
+                        Point(
+                                realX.roundToInt() - (realWidth / 2).roundToInt(),
+                                realY.roundToInt() - (realHeight / 2).roundToInt()
+                        ),
+                        realWidth.roundToInt(),
+                        realHeight.roundToInt()
                 )
             }
             viewObjects.forEach {
@@ -76,16 +85,73 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                 val realWidth = it.width.toDouble() * xMultiplier
                 val realHeight = it.height.toDouble() * yMultiplier
                 it.paint(
-                    g,
-                    Point(
-                        realX.roundToInt() - (realWidth / 2).roundToInt(),
-                        realY.roundToInt() - (realHeight / 2).roundToInt()
-                    ),
-                    realWidth.roundToInt(),
-                    realHeight.roundToInt()
+                        imageGraphics,
+                        Point(
+                                realX.roundToInt() - (realWidth / 2).roundToInt(),
+                                realY.roundToInt() - (realHeight / 2).roundToInt()
+                        ),
+                        realWidth.roundToInt(),
+                        realHeight.roundToInt()
                 )
             }
+            g.drawImage(applyOldTVFilter(gameImage), 0, 0, null)
         }
+    }
+
+    private fun Color.isColorBright(): Boolean {
+        // Calculate the luminance value
+        val luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+
+        // Check if the luminance value is above a threshold
+        val brightnessThreshold = 0.8 // Adjust the threshold as desired
+        return luminance > brightnessThreshold
+    }
+
+    private fun applyOldTVFilter(image: BufferedImage): BufferedImage? {
+        val width = image.width
+        val height = image.height
+
+        val filteredImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+        val graphics = filteredImage.createGraphics()
+        graphics.drawImage(image, 0, 0, null)
+
+        // Apply scan lines effect
+        val scanLineHeight = 1 // Adjust the height of scan lines as desired
+
+        val scanLineSpacing = 3 // Adjust the spacing between scan lines as desired
+
+        if (defaultColors.background.isColorBright().not()) {
+            var y = 0
+            while (y < height) {
+                graphics.color = defaultColors.background.darker().darker()
+                graphics.fillRect(0, y, width, scanLineHeight)
+                y += scanLineHeight + scanLineSpacing
+            }
+        }
+        // Apply noise effect
+        val noiseIntensity = 0.1 // Adjust the intensity of noise as desired
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val rgb = filteredImage.getRGB(x, y)
+                val alpha = rgb shr 24 and 0xFF
+                var red = rgb shr 16 and 0xFF
+                var green = rgb shr 8 and 0xFF
+                var blue = rgb and 0xFF
+                val noise = (Math.random() * 256 * noiseIntensity).toInt()
+                red = clamp(red + noise)
+                green = clamp(green + noise)
+                blue = clamp(blue + noise)
+                val filteredRGB = alpha shl 24 or (red shl 16) or (green shl 8) or blue
+                filteredImage.setRGB(x, y, filteredRGB)
+            }
+        }
+        graphics.dispose()
+        return filteredImage
+    }
+
+    private fun clamp(value: Int): Int {
+        return max(0, min(255, value))
     }
 
     fun clean() {
