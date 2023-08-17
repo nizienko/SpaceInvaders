@@ -1,13 +1,17 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.GameObject
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.containers.ConcurrentList
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Image.SCALE_SMOOTH
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.image.BufferedImage
+import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
@@ -35,13 +39,17 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         })
     }
 
+    // this is fast but error can occur
     private val gameObjects = mutableListOf<GameObject>()
     private val viewObjects = mutableListOf<GameObject>()
 
+    // this is slow
+//    private val gameObjects = ConcurrentLinkedDeque<GameObject>()
+//    private val viewObjects = ConcurrentLinkedDeque<GameObject>()
     private val xMultiplier: Double
-        get() = (width.toDouble() / gameWidth.toDouble())
+        get() = (imageWidth.toDouble() / gameWidth.toDouble())
     private val yMultiplier: Double
-        get() = (height.toDouble() / gameHeight.toDouble())
+        get() = (imageHeight.toDouble() / gameHeight.toDouble())
 
     fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
         if (zoomable) {
@@ -57,13 +65,14 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     }
 
     var defaultColors = Colors(1)
-
+    private val imageWidth = 500
+    private val imageHeight = 500
+    private val gameImage = BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB)
+    private val imageGraphics = gameImage.createGraphics()
     override fun paint(g: Graphics?) {
         if (g != null && g is Graphics2D) {
-            val gameImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-            val imageGraphics = gameImage.createGraphics()
             imageGraphics.background = defaultColors.background
-            imageGraphics.clearRect(0, 0, width, height)
+            imageGraphics.clearRect(0, 0, imageWidth, imageHeight)
             gameObjects.forEach {
                 val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
                 val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
@@ -94,7 +103,7 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                         realHeight.roundToInt()
                 )
             }
-            g.drawImage(applyOldTVFilter(gameImage), 0, 0, null)
+            g.drawImage(gameImage.getScaledInstance(width, height, SCALE_SMOOTH), 0, 0, null)
         }
     }
 
@@ -107,18 +116,16 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         return luminance > brightnessThreshold
     }
 
-    private fun applyOldTVFilter(image: BufferedImage): BufferedImage? {
+    private fun applyOldTVFilter(image: BufferedImage): BufferedImage {
         val width = image.width
         val height = image.height
 
-        val filteredImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-        val graphics = filteredImage.createGraphics()
-        graphics.drawImage(image, 0, 0, null)
+        val graphics = image.createGraphics()
 
         // Apply scan lines effect
         val scanLineHeight = 1 // Adjust the height of scan lines as desired
 
-        val scanLineSpacing = 3 // Adjust the spacing between scan lines as desired
+        val scanLineSpacing = 7 // Adjust the spacing between scan lines as desired
 
         if (defaultColors.background.isColorBright().not()) {
             var y = 0
@@ -133,7 +140,7 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
 
         for (y in 0 until height) {
             for (x in 0 until width) {
-                val rgb = filteredImage.getRGB(x, y)
+                val rgb = image.getRGB(x, y)
                 val alpha = rgb shr 24 and 0xFF
                 var red = rgb shr 16 and 0xFF
                 var green = rgb shr 8 and 0xFF
@@ -143,11 +150,11 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                 green = clamp(green + noise)
                 blue = clamp(blue + noise)
                 val filteredRGB = alpha shl 24 or (red shl 16) or (green shl 8) or blue
-                filteredImage.setRGB(x, y, filteredRGB)
+                image.setRGB(x, y, filteredRGB)
             }
         }
         graphics.dispose()
-        return filteredImage
+        return image
     }
 
     private fun clamp(value: Int): Int {

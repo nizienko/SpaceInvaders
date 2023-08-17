@@ -24,7 +24,7 @@ class Game {
         fun millisToFrames(millis: Long) = millis * (FRAME_RATE.toDouble() / 1000.0)
     }
 
-    val display: GameDisplay = GameDisplay(1600, 1400).apply {
+    val display: GameDisplay = GameDisplay(1500, 1500).apply {
         font = UIUtil.getLabelFont(UIUtil.FontSize.NORMAL)
         addFocusListener(object : FocusListener {
             override fun focusGained(e: FocusEvent?) {
@@ -82,8 +82,8 @@ class Game {
     private val bottomText = Text(100, 600, 100, 90)
     private val bottomText2 = Text(100, 800, 100, 90)
     private val levelText = Text(700, 40, 100, 40)
-    private val killedCounterText = Text(1150, 40, 100, 40)
-    private val killedRecordText = Text(1400, 40, 100, 40)
+    private val killedCounterText = Text(1050, 40, 100, 40)
+    private val killedRecordText = Text(1300, 40, 100, 40)
     private var killedCount = 0
     private var killedRecord = 0
 
@@ -161,7 +161,7 @@ class Game {
         invaders.apply {
             clear()
             var n = 1
-            (0..11).forEach { c ->
+            (0..10).forEach { c ->
                 (0..4).forEach { r ->
                     val invader = Invader(c * 100, r * 100, n)
                     n++
@@ -181,7 +181,7 @@ class Game {
         invadersBullets.clear()
         animations.clear()
         bonuses.clear()
-        spaceShip = SpaceShip(800, 1300, display.gameWidth).apply {
+        spaceShip = SpaceShip(750, 1400, display.gameWidth).apply {
             fireFunction = { x, y ->
                 val bullet = Bullet(x, y - spaceShip.height / 2, speed = gameModifiers.spaceShipBulletSpeed)
                 bullet.defaultColours = colors
