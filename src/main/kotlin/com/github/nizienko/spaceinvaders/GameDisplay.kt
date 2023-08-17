@@ -6,12 +6,16 @@ import com.intellij.util.containers.ConcurrentList
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Image.SCALE_FAST
 import java.awt.Image.SCALE_SMOOTH
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
@@ -40,70 +44,85 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     }
 
     // this is fast but error can occur
-    private val gameObjects = mutableListOf<GameObject>()
-    private val viewObjects = mutableListOf<GameObject>()
+    private val gameObjects = mutableSetOf<GameObject>()
+    private val viewObjects = mutableSetOf<GameObject>()
 
-    // this is slow
-//    private val gameObjects = ConcurrentLinkedDeque<GameObject>()
-//    private val viewObjects = ConcurrentLinkedDeque<GameObject>()
     private val xMultiplier: Double
         get() = (imageWidth.toDouble() / gameWidth.toDouble())
     private val yMultiplier: Double
         get() = (imageHeight.toDouble() / gameHeight.toDouble())
 
+    private val paintLock = ReentrantLock()
     fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
-        if (zoomable) {
-            gameObjects.add(gameObject)
-        } else {
-            viewObjects.add(gameObject)
+//        paintLock.lock()
+        try {
+            if (zoomable) {
+                gameObjects.add(gameObject)
+            } else {
+                viewObjects.add(gameObject)
+            }
+        } finally {
+//            paintLock.unlock()
         }
     }
 
     fun removeObject(gameObject: GameObject) {
-        gameObjects.remove(gameObject)
-        viewObjects.remove(gameObject)
+//        paintLock.lock()
+        try {
+            gameObjects.remove(gameObject)
+            viewObjects.remove(gameObject)
+        } finally {
+//            paintLock.unlock()
+        }
     }
 
     var defaultColors = Colors(1)
-    private val imageWidth = 500
-    private val imageHeight = 500
+    private val imageWidth = 250
+    private val imageHeight = 250
     private val gameImage = BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB)
     private val imageGraphics = gameImage.createGraphics()
     override fun paint(g: Graphics?) {
+
         if (g != null && g is Graphics2D) {
             imageGraphics.background = defaultColors.background
             imageGraphics.clearRect(0, 0, imageWidth, imageHeight)
-            gameObjects.forEach {
-                val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
-                val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
-                val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
-                val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
-                it.paint(
+
+//            paintLock.lock()
+            try {
+                gameObjects.toList().forEach {
+                    val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
+                    val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
+                    val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
+                    val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
+                    it.paint(
                         imageGraphics,
                         Point(
-                                realX.roundToInt() - (realWidth / 2).roundToInt(),
-                                realY.roundToInt() - (realHeight / 2).roundToInt()
+                            realX.roundToInt() - (realWidth / 2).roundToInt(),
+                            realY.roundToInt() - (realHeight / 2).roundToInt()
                         ),
                         realWidth.roundToInt(),
                         realHeight.roundToInt()
-                )
-            }
-            viewObjects.forEach {
-                val realX = (it.position.x).toDouble() * xMultiplier
-                val realY = (it.position.y).toDouble() * yMultiplier
-                val realWidth = it.width.toDouble() * xMultiplier
-                val realHeight = it.height.toDouble() * yMultiplier
-                it.paint(
+                    )
+                }
+                viewObjects.toList().forEach {
+                    val realX = (it.position.x).toDouble() * xMultiplier
+                    val realY = (it.position.y).toDouble() * yMultiplier
+                    val realWidth = it.width.toDouble() * xMultiplier
+                    val realHeight = it.height.toDouble() * yMultiplier
+                    it.paint(
                         imageGraphics,
                         Point(
-                                realX.roundToInt() - (realWidth / 2).roundToInt(),
-                                realY.roundToInt() - (realHeight / 2).roundToInt()
+                            realX.roundToInt() - (realWidth / 2).roundToInt(),
+                            realY.roundToInt() - (realHeight / 2).roundToInt()
                         ),
                         realWidth.roundToInt(),
                         realHeight.roundToInt()
-                )
+                    )
+                }
+            } finally {
+//                paintLock.unlock()
             }
-            g.drawImage(gameImage.getScaledInstance(width, height, SCALE_SMOOTH), 0, 0, null)
+            g.drawImage(applyOldTVFilter(gameImage).getScaledInstance(width, height, SCALE_FAST), 0, 0, null)
         }
     }
 
@@ -125,18 +144,18 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         // Apply scan lines effect
         val scanLineHeight = 1 // Adjust the height of scan lines as desired
 
-        val scanLineSpacing = 7 // Adjust the spacing between scan lines as desired
+        val scanLineSpacing = 4 // Adjust the spacing between scan lines as desired
 
-        if (defaultColors.background.isColorBright().not()) {
-            var y = 0
-            while (y < height) {
-                graphics.color = defaultColors.background.darker().darker()
-                graphics.fillRect(0, y, width, scanLineHeight)
-                y += scanLineHeight + scanLineSpacing
-            }
-        }
+//        if (defaultColors.background.isColorBright().not()) {
+//            var y = 0
+//            while (y < height) {
+//                graphics.color = defaultColors.background.brighter()
+//                graphics.fillRect(0, y, width, scanLineHeight)
+//                y += scanLineHeight + scanLineSpacing
+//            }
+//        }
         // Apply noise effect
-        val noiseIntensity = 0.1 // Adjust the intensity of noise as desired
+        val noiseIntensity = 0.05 // Adjust the intensity of noise as desired
 
         for (y in 0 until height) {
             for (x in 0 until width) {
@@ -145,7 +164,7 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                 var red = rgb shr 16 and 0xFF
                 var green = rgb shr 8 and 0xFF
                 var blue = rgb and 0xFF
-                val noise = (Math.random() * 256 * noiseIntensity).toInt()
+                val noise = (ThreadLocalRandom.current().nextDouble(-1.0, 1.0) * 256 * noiseIntensity).toInt()
                 red = clamp(red + noise)
                 green = clamp(green + noise)
                 blue = clamp(blue + noise)
