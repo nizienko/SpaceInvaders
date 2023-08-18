@@ -303,7 +303,7 @@ class Game {
     }
 
     fun startGame() {
-        thread(name = "SpaceInvaders-game") {
+        thread(name = "SpaceInvaders-Game") {
             while (gameState != GameState.EXITED) {
                 when (gameState) {
                     GameState.PLAY, GameState.GAME_OVER, GameState.WIN -> process()
