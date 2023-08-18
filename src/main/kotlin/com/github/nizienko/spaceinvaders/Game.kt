@@ -293,11 +293,10 @@ class Game {
 
         // set speed
         invadersMovements.xSpeed = 5 - (invaders.count().toDouble() / 10) + level
-
         // win?
         if (invaders.isEmpty()) {
             gameState = GameState.WIN
-            display.camera.zoomTarget = 1.7
+            display.camera.zoomTarget = 1.8
         }
         // lost?
         if (health.value <= 0) gameOver()
@@ -355,7 +354,7 @@ class Game {
 
     private fun gameOver() {
         gameState = GameState.GAME_OVER
-        display.camera.zoomTarget = 0.8
+        display.camera.zoomTarget = 0.6
     }
 }
 
