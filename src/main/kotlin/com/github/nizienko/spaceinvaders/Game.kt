@@ -49,7 +49,7 @@ class Game {
                             spaceShip.moveRight()
                         }
                     }
-                    if (e.keyCode == KeyEvent.VK_UP) {
+                    if (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_X) {
                         if (gameState == GameState.PLAY) {
                             spaceShip.fire()
                         }
@@ -103,6 +103,7 @@ class Game {
             display.camera.zoom -= value
         }
     }
+
     val gameModifiers = GameModifiers()
 
 
@@ -153,7 +154,7 @@ class Game {
         display.addObject(levelText, false)
         levelText.text = "level $level"
         bottomText.text = "press space to start"
-        bottomText2.text = "move: ← →  fire: ↑"
+        bottomText2.text = "move: ← →  fire: ↑ or x"
         killedCounterText.text = "killed: $killedCount"
         killedRecordText.text = "record: $killedRecord"
         invadersMovements = InvadersMovements()
@@ -304,7 +305,7 @@ class Game {
     fun startGame() {
         thread(name = "SpaceInvaders-game") {
             while (gameState != GameState.EXITED) {
-                when(gameState) {
+                when (gameState) {
                     GameState.PLAY, GameState.GAME_OVER, GameState.WIN -> process()
                     else -> {}
                 }
@@ -343,6 +344,7 @@ class Game {
                         bottomText.text = "press space to next level"
                         display.repaint()
                     }
+
                     GameState.EXITED -> break
                 }
                 val sleep = 1000L / FRAME_RATE
