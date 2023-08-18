@@ -1,24 +1,13 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.GameObject
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.containers.ConcurrentList
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.Image.SCALE_FAST
-import java.awt.Image.SCALE_SMOOTH
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
-import java.awt.image.BufferedImage
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JPanel
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 
@@ -48,81 +37,58 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     private val viewObjects = mutableSetOf<GameObject>()
 
     private val xMultiplier: Double
-        get() = (imageWidth.toDouble() / gameWidth.toDouble())
+        get() = (width.toDouble() / gameWidth.toDouble())
     private val yMultiplier: Double
-        get() = (imageHeight.toDouble() / gameHeight.toDouble())
+        get() = (height.toDouble() / gameHeight.toDouble())
 
-    private val paintLock = ReentrantLock()
     fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
-//        paintLock.lock()
-        try {
-            if (zoomable) {
-                gameObjects.add(gameObject)
-            } else {
-                viewObjects.add(gameObject)
-            }
-        } finally {
-//            paintLock.unlock()
+        if (zoomable) {
+            gameObjects.add(gameObject)
+        } else {
+            viewObjects.add(gameObject)
         }
     }
 
     fun removeObject(gameObject: GameObject) {
-//        paintLock.lock()
-        try {
-            gameObjects.remove(gameObject)
-            viewObjects.remove(gameObject)
-        } finally {
-//            paintLock.unlock()
-        }
+        gameObjects.remove(gameObject)
+        viewObjects.remove(gameObject)
     }
 
     var defaultColors = Colors(1)
-    private val imageWidth = 250
-    private val imageHeight = 250
-    private val gameImage = BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB)
-    private val imageGraphics = gameImage.createGraphics()
     override fun paint(g: Graphics?) {
-
         if (g != null && g is Graphics2D) {
-            imageGraphics.background = defaultColors.background
-            imageGraphics.clearRect(0, 0, imageWidth, imageHeight)
-
-//            paintLock.lock()
-            try {
-                gameObjects.toList().forEach {
-                    val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
-                    val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
-                    val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
-                    val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
-                    it.paint(
-                        imageGraphics,
-                        Point(
-                            realX.roundToInt() - (realWidth / 2).roundToInt(),
-                            realY.roundToInt() - (realHeight / 2).roundToInt()
-                        ),
-                        realWidth.roundToInt(),
-                        realHeight.roundToInt()
-                    )
-                }
-                viewObjects.toList().forEach {
-                    val realX = (it.position.x).toDouble() * xMultiplier
-                    val realY = (it.position.y).toDouble() * yMultiplier
-                    val realWidth = it.width.toDouble() * xMultiplier
-                    val realHeight = it.height.toDouble() * yMultiplier
-                    it.paint(
-                        imageGraphics,
-                        Point(
-                            realX.roundToInt() - (realWidth / 2).roundToInt(),
-                            realY.roundToInt() - (realHeight / 2).roundToInt()
-                        ),
-                        realWidth.roundToInt(),
-                        realHeight.roundToInt()
-                    )
-                }
-            } finally {
-//                paintLock.unlock()
+            g.background = defaultColors.background
+            g.clearRect(0, 0, width, height)
+            gameObjects.toList().forEach {
+                val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
+                val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
+                val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
+                val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
+                it.paint(
+                    g,
+                    Point(
+                        realX.roundToInt() - (realWidth / 2).roundToInt(),
+                        realY.roundToInt() - (realHeight / 2).roundToInt()
+                    ),
+                    realWidth.roundToInt(),
+                    realHeight.roundToInt()
+                )
             }
-            g.drawImage(applyOldTVFilter(gameImage).getScaledInstance(width, height, SCALE_FAST), 0, 0, null)
+            viewObjects.toList().forEach {
+                val realX = (it.position.x).toDouble() * xMultiplier
+                val realY = (it.position.y).toDouble() * yMultiplier
+                val realWidth = it.width.toDouble() * xMultiplier
+                val realHeight = it.height.toDouble() * yMultiplier
+                it.paint(
+                    g,
+                    Point(
+                        realX.roundToInt() - (realWidth / 2).roundToInt(),
+                        realY.roundToInt() - (realHeight / 2).roundToInt()
+                    ),
+                    realWidth.roundToInt(),
+                    realHeight.roundToInt()
+                )
+            }
         }
     }
 
@@ -133,51 +99,6 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         // Check if the luminance value is above a threshold
         val brightnessThreshold = 0.8 // Adjust the threshold as desired
         return luminance > brightnessThreshold
-    }
-
-    private fun applyOldTVFilter(image: BufferedImage): BufferedImage {
-        val width = image.width
-        val height = image.height
-
-        val graphics = image.createGraphics()
-
-        // Apply scan lines effect
-        val scanLineHeight = 1 // Adjust the height of scan lines as desired
-
-        val scanLineSpacing = 4 // Adjust the spacing between scan lines as desired
-
-//        if (defaultColors.background.isColorBright().not()) {
-//            var y = 0
-//            while (y < height) {
-//                graphics.color = defaultColors.background.brighter()
-//                graphics.fillRect(0, y, width, scanLineHeight)
-//                y += scanLineHeight + scanLineSpacing
-//            }
-//        }
-        // Apply noise effect
-        val noiseIntensity = 0.05 // Adjust the intensity of noise as desired
-
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val rgb = image.getRGB(x, y)
-                val alpha = rgb shr 24 and 0xFF
-                var red = rgb shr 16 and 0xFF
-                var green = rgb shr 8 and 0xFF
-                var blue = rgb and 0xFF
-                val noise = (ThreadLocalRandom.current().nextDouble(-1.0, 1.0) * 256 * noiseIntensity).toInt()
-                red = clamp(red + noise)
-                green = clamp(green + noise)
-                blue = clamp(blue + noise)
-                val filteredRGB = alpha shl 24 or (red shl 16) or (green shl 8) or blue
-                image.setRGB(x, y, filteredRGB)
-            }
-        }
-        graphics.dispose()
-        return image
-    }
-
-    private fun clamp(value: Int): Int {
-        return max(0, min(255, value))
     }
 
     fun clean() {
@@ -208,7 +129,6 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
             if (newY + height > 0) newY = gameHeight - height
             x = newX
             y = newY
-
 
             if (zoom > zoomTarget) {
                 val step = (zoom - zoomTarget) / 10.0

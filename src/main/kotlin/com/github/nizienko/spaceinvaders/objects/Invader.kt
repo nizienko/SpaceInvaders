@@ -2,6 +2,7 @@ package com.github.nizienko.spaceinvaders.objects
 
 import com.github.nizienko.spaceinvaders.CanExpired
 import java.awt.Point
+import java.util.concurrent.ThreadLocalRandom
 import kotlin.random.Random
 
 class Invader(private val shiftX: Int, private val shiftY: Int, private val n: Int) : GameObject() {
@@ -59,7 +60,7 @@ class Invader(private val shiftX: Int, private val shiftY: Int, private val n: I
             totalInvadersLeft < 30 -> 900
             else -> 1000
         }
-        if (Random.nextInt(shotSpeed) == shotSpeed / 60 * n) fire(x, y)
+        if (ThreadLocalRandom.current().nextInt(shotSpeed) == shotSpeed / 60 * n) fire(x, y)
     }
 
 

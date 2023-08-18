@@ -7,7 +7,7 @@ import java.awt.Color
 class HealerFull(x: Int, y: Int, maxY: Int) : Bonus(x, y, maxY) {
     override fun applyBonus(gameModifiers: Game.GameModifiers) {
         gameModifiers.spaceShipHealth = 100
-        gameModifiers.shakeCamera(0.03)
+        gameModifiers.shakeCamera(0.01)
     }
     override val width: Int = 45
     override val height: Int = 45

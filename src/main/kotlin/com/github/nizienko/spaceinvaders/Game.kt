@@ -12,7 +12,6 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
 import javax.swing.JFrame
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
@@ -163,7 +162,7 @@ class Game {
             var n = 1
             (0..10).forEach { c ->
                 (0..4).forEach { r ->
-                    val invader = Invader(c * 100, r * 100, n)
+                    val invader = Invader(c * 100, r * 100 + 100, n)
                     n++
                     invader.move(invadersMovements.getPoint())
                     invader.totalInvadersLeft = invaders.size
@@ -303,47 +302,51 @@ class Game {
     }
 
     fun startGame() {
-        thread {
+        thread(name = "SpaceInvaders-game") {
+            while (gameState != GameState.EXITED) {
+                when(gameState) {
+                    GameState.PLAY, GameState.GAME_OVER, GameState.WIN -> process()
+                    else -> {}
+                }
+                Thread.sleep(1000L / (FRAME_RATE))
+            }
+        }
+        thread(name = "SpaceInvaders-UI") {
             while (gameState != GameState.EXITED) {
                 when (gameState) {
                     GameState.NEW -> {
                         centerText.text = "level $level"
                         bottomText.text = "press space to start"
                         display.repaint()
-                        Thread.sleep(500)
                     }
 
                     GameState.PLAY -> {
                         centerText.text = ""
                         bottomText.text = ""
                         bottomText2.text = ""
-                        process()
                         display.repaint()
                     }
 
                     GameState.PAUSE -> {
                         bottomText2.text = "pause"
                         display.repaint()
-                        Thread.sleep(500)
                     }
 
                     GameState.GAME_OVER -> {
                         centerText.text = "game over"
                         bottomText.text = "$killedCount killed"
-                        process()
                         display.repaint()
                     }
 
                     GameState.WIN -> {
                         centerText.text = "win!"
                         bottomText.text = "press space to next level"
-                        process()
                         display.repaint()
                     }
-
                     GameState.EXITED -> break
                 }
-                Thread.sleep(1000L / FRAME_RATE)
+                val sleep = 1000L / FRAME_RATE
+                Thread.sleep(sleep)
             }
         }
     }
@@ -410,7 +413,7 @@ interface CanExpired {
 }
 
 class GameObjects<T : GameObject>(private val display: GameDisplay) : Iterable<T> {
-    private val list = Collections.synchronizedList(mutableListOf<T>())
+    private val list = mutableSetOf<T>()
 
     fun clear() = list.clear()
     val size
