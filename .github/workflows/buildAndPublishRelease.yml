@@ -15,7 +15,7 @@ jobs:
           distribution: zulu
           java-version: 11
       - name: Build the plugin
-        run: gradle :buildPlugin
+        run: ./gradlew :buildPlugin
       - name: Save the plugin
         if: ${{ success() }}
         uses: actions/upload-artifact@v3
