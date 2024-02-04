@@ -21,5 +21,5 @@ class SpaceShipExplosionAnimation(x: Int, y: Int) : Animation() {
         oval(25, 25, 25 - shift, 25 - shift)
     }
     private val shift: Int
-        get() = faze * 3
+        get() = phase * 3
 }

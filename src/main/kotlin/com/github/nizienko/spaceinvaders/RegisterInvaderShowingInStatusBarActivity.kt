@@ -22,21 +22,28 @@ import javax.swing.JComponent
 
 
 internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, DumbAware {
+
     override fun runActivity(project: Project) {
         val statusBar = WindowManager.getInstance().getStatusBar(project)
         val widget = SpaceInvadersWidget()
-        val show = {
-            if (statusBar.getWidget(widget.ID()) == null) {
-                // todo: Use StatusBarWidgetFactory
-                statusBar.addWidget(
+
+        val show: () -> Unit = {
+            statusBar.addWidget(
                     widget,
-                    StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL)
-                )
-            }
+                    StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL),
+                    project)
         }
-        val hide = {
+
+        val hide: () -> Unit = {
             statusBar.removeWidget(widget.ID())
         }
+
+        subscribeToDumbMode(project, show, hide)
+        subscribeToProjectTaskListener(project, show, hide)
+        subscribeToSMTRunnerEventsListener(project, show, hide)
+    }
+
+    private fun subscribeToDumbMode(project: Project, show: () -> Unit, hide: () -> Unit) {
         project.messageBus.connect().subscribe(DumbService.DUMB_MODE, object : DumbModeListener {
             override fun enteredDumbMode() {
                 show()
@@ -46,6 +53,9 @@ internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, Dumb
                 hide()
             }
         })
+    }
+
+    private fun subscribeToProjectTaskListener(project: Project, show: () -> Unit, hide: () -> Unit) {
         project.messageBus.connect().subscribe(ProjectTaskListener.TOPIC, object : ProjectTaskListener {
             override fun started(context: ProjectTaskContext) {
                 show()
@@ -55,6 +65,9 @@ internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, Dumb
                 hide()
             }
         })
+    }
+
+    private fun subscribeToSMTRunnerEventsListener(project: Project, show: () -> Unit, hide: () -> Unit) {
         project.messageBus.connect().subscribe(SMTRunnerEventsListener.TEST_STATUS, object : SMTRunnerEventsListener {
             override fun onTestingStarted(testsRoot: SMTestProxy.SMRootTestProxy) {
                 show()
@@ -65,85 +78,71 @@ internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, Dumb
             }
 
             override fun onTestsCountInSuite(count: Int) {
-
             }
 
             override fun onTestStarted(test: SMTestProxy) {
-
             }
 
             override fun onTestFinished(test: SMTestProxy) {
-
             }
 
             override fun onTestFailed(test: SMTestProxy) {
-
             }
 
             override fun onTestIgnored(test: SMTestProxy) {
-
             }
 
             override fun onSuiteFinished(suite: SMTestProxy) {
-
             }
 
             override fun onSuiteStarted(suite: SMTestProxy) {
-
             }
 
             override fun onCustomProgressTestsCategory(categoryName: String?, testCount: Int) {
-
             }
 
             override fun onCustomProgressTestStarted() {
-
             }
 
             override fun onCustomProgressTestFailed() {
-
             }
 
             override fun onCustomProgressTestFinished() {
-
             }
 
             override fun onSuiteTreeNodeAdded(testProxy: SMTestProxy?) {
-
             }
 
             override fun onSuiteTreeStarted(suite: SMTestProxy?) {
-
             }
         })
     }
 }
 
 internal class SpaceInvadersWidget : IconLikeCustomStatusBarWidget {
-    override fun dispose() {
 
+    override fun dispose() {
     }
 
     override fun ID(): String = "SpaceInvaders"
 
     override fun install(statusBar: StatusBar) {
-
     }
 
     override fun getComponent(): JComponent {
         return IconLabelButton(MyIcons.Monster) {
-            DataManager.getInstance().dataContextFromFocusAsync.then { dataContext ->
+            DataManager.getInstance().getDataContextFromFocusAsync().onSuccess { dataContext ->
                 ActionManager.getInstance().getAction("com.github.nizienko.spaceinvaders.OpenGameAction")
-                    .actionPerformed(
-                        AnActionEvent(
-                            null,
-                            dataContext,
-                            ActionPlaces.UNKNOWN,
-                            Presentation(),
-                            ActionManager.getInstance(),
-                            0
+                        .actionPerformed(
+                            AnActionEvent(
+                                null,
+                                dataContext,
+                                ActionPlaces.UNKNOWN,
+                                Presentation(),
+                                ActionManager.getInstance(),
+                                0
+                            )
                         )
-                    )
             }
         }
     }

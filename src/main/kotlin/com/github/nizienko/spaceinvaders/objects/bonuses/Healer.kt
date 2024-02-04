@@ -15,8 +15,12 @@ class Healer(x: Int, y: Int, maxY: Int) : Bonus(x, y, maxY) {
         rect(1, 0, 1, 3)
     }
 
+    private fun shakeCamera(gameModifiers: Game.GameModifiers) {
+        gameModifiers.shakeCamera(0.01)
+    }
+
     override fun applyBonus(gameModifiers: Game.GameModifiers) {
         gameModifiers.spaceShipHealth += 5
-        gameModifiers.shakeCamera(0.01)
+        shakeCamera(gameModifiers)
     }
 }

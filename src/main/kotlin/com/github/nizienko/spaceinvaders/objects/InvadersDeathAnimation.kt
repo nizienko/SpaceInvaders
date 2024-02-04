@@ -34,7 +34,7 @@ class InvadersDeathAnimation(x: Int, y: Int) : Animation() {
     }
 
     private val shift
-        get() = faze * 4
+        get() = phase * 4
 
     override val durationMs = 200L
 }

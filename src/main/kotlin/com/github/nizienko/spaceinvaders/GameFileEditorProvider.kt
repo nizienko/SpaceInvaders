@@ -9,9 +9,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 
 class GameFileEditorProvider : FileEditorProvider, DumbAware {
-    companion object {
-        val GAME_KEY: Key<String> = Key.create("space.invaders")
-    }
     override fun accept(project: Project, file: VirtualFile): Boolean {
         return file.getUserData(GAME_KEY) != null
     }
@@ -28,3 +25,5 @@ class GameFileEditorProvider : FileEditorProvider, DumbAware {
         return FileEditorPolicy.HIDE_DEFAULT_EDITOR
     }
 }
+
+val GAME_KEY: Key<String> = Key.create("space.invaders")

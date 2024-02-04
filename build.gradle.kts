@@ -1,11 +1,11 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.7.21"
-    id("org.jetbrains.intellij") version "1.15.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.0"
+    id("org.jetbrains.intellij") version "1.17.0"
 }
 
 group = "com.github.nizienko"
-version = "1.0.6"
+version = "1.0.7"
 
 repositories {
     mavenCentral()
@@ -34,7 +34,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("213")
-        untilBuild.set("233.*")
+        untilBuild.set("241.*")
     }
 
     signPlugin {

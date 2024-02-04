@@ -5,7 +5,7 @@ import com.github.nizienko.spaceinvaders.Colors
 import java.awt.*
 import kotlin.math.roundToInt
 
-abstract class GameObject: CanExpired {
+abstract class GameObject : CanExpired {
     abstract val position: Point
     abstract val width: Int
     abstract val height: Int
@@ -23,8 +23,8 @@ abstract class GameObject: CanExpired {
 
 
 class Painter(
-    private val sizeX: Int,
-    private val sizeY: Int,
+    sizeX: Int,
+    sizeY: Int,
     private val graphics: Graphics2D,
     private val position: Point,
     private val width: Int,
@@ -88,11 +88,15 @@ class Painter(
         )
     }
 
-    fun text(text: String, x: Int, y: Int, font: Int) {
+    fun text(text: String, x: Int, y: Int, font: Int, center: Boolean = true) {
         val fontSize = (font * yMultiplier).roundToInt()
         graphics.font = graphics.font.deriveFont(fontSize.toFloat())
-        val textWidth: Int = graphics.fontMetrics.widths[7] * (text.length)
-        val gx = position.x + (x * xMultiplier).roundToInt() //- textWidth / 2
+        val textWidth: Int = graphics.fontMetrics.stringWidth(text)
+        val gx = if (center) {
+            position.x + (x * xMultiplier).roundToInt() - textWidth / 2
+        } else {
+            position.x + (x * xMultiplier).roundToInt()
+        }
         val gy = position.y + (y * yMultiplier).roundToInt() + fontSize / 2
         graphics.drawString(text, gx, gy)
     }

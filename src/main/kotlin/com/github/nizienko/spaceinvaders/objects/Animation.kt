@@ -2,17 +2,19 @@ package com.github.nizienko.spaceinvaders.objects
 
 import com.github.nizienko.spaceinvaders.Game
 
-abstract class Animation: GameObject() {
-    protected var faze: Int = 0
-
+abstract class Animation : GameObject() {
+    protected var phase: Int = 0
     private var finished = false
-
     abstract val durationMs: Long
 
     override fun process() {
-        faze++
-        if (faze > Game.millisToFrames(durationMs)) finished = true
+        nextPhase()
     }
 
-    override fun isExpired(): Boolean  = finished
+    private fun nextPhase() {
+        phase++
+        if (phase > Game.millisToFrames(durationMs)) finished = true
+    }
+
+    override fun isExpired(): Boolean = finished
 }

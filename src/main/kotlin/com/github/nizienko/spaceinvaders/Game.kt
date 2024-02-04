@@ -24,7 +24,6 @@ class Game {
     }
 
     val display: GameDisplay = GameDisplay(1500, 1500).apply {
-        font = UIUtil.getLabelFont(UIUtil.FontSize.NORMAL)
         addFocusListener(object : FocusListener {
             override fun focusGained(e: FocusEvent?) {
             }
@@ -77,12 +76,12 @@ class Game {
     private var gameOverTime: Long = 0L
     private var level = 1
     private lateinit var colors: Colors
-    private val centerText = Text(100, 400, 100, 170)
-    private val bottomText = Text(100, 600, 100, 90)
-    private val bottomText2 = Text(100, 800, 100, 90)
-    private val levelText = Text(700, 40, 100, 40)
-    private val killedCounterText = Text(1050, 40, 100, 40)
-    private val killedRecordText = Text(1300, 40, 100, 40)
+    private val centerText = Text(display.gameWidth / 2, 400, 100, 170)
+    private val bottomText = Text(display.gameWidth / 2, 600, 100, 90)
+    private val bottomText2 = Text(display.gameWidth / 2, 800, 100, 90)
+    private val levelText = Text(display.gameWidth / 2, 40, 100, 40)
+    private val killedCounterText = Text(display.gameWidth - (display.gameWidth / 12) * 4, 40, 100, 40)
+    private val killedRecordText = Text(display.gameWidth - (display.gameWidth / 12) * 1, 40, 100, 40)
     private var killedCount = 0
     private var killedRecord = 0
 
@@ -104,7 +103,7 @@ class Game {
         }
     }
 
-    val gameModifiers = GameModifiers()
+    private val gameModifiers = GameModifiers()
 
 
     init {
@@ -274,7 +273,7 @@ class Game {
         bonuses.forEach { h ->
             if (spaceShip.isObjectHit(h)) {
                 h.applyBonus(gameModifiers)
-                h.isOut = true
+                h.setOut()
             }
         }
         animations.forEach { it.process() }
@@ -317,7 +316,7 @@ class Game {
                 when (gameState) {
                     GameState.NEW -> {
                         centerText.text = "level $level"
-                        bottomText.text = "press space to start"
+                        bottomText.text = "press SPACE"
                         display.repaint()
                     }
 
@@ -341,7 +340,7 @@ class Game {
 
                     GameState.WIN -> {
                         centerText.text = "win!"
-                        bottomText.text = "press space to next level"
+                        bottomText.text = "press SPACE for next level"
                         display.repaint()
                     }
 
@@ -363,7 +362,7 @@ class Game {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     val game = Game()
     createDemoUI(game.display)
     game.startGame()

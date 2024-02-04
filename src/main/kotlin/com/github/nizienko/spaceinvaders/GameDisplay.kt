@@ -5,6 +5,7 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JPanel
@@ -13,21 +14,9 @@ import kotlin.math.roundToInt
 
 class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     init {
-        addMouseListener(object : MouseListener {
+        addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent?) {
                 requestFocusInWindow()
-            }
-
-            override fun mousePressed(e: MouseEvent?) {
-            }
-
-            override fun mouseReleased(e: MouseEvent?) {
-            }
-
-            override fun mouseEntered(e: MouseEvent?) {
-            }
-
-            override fun mouseExited(e: MouseEvent?) {
             }
         })
     }

@@ -5,7 +5,7 @@ import java.awt.Point
 class ProgressLevel(private val text: String, position: Point, initValue: Int, private val minValue: Int, private val maxValue: Int) : GameObject() {
     override val position: Point = position
     override val width: Int = 600
-    override val height: Int = 35
+    override val height: Int = 45
     override val pictureSizeX: Int = 100
     override val pictureSizeY: Int = 2
     override val picture: Painter.() -> Unit = {
@@ -14,7 +14,7 @@ class ProgressLevel(private val text: String, position: Point, initValue: Int, p
         color(defaultColours.gameObject.brighter().brighter())
         rect(value, 0, maxValue - value, 2)
         color(defaultColours.background)
-        text(text, 2, 1, 1)
+        text(text, 2, 1, 1, false)
     }
 
     private var _value = initValue
