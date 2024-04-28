@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.nizienko"
-version = "1.0.7"
+version = "1.0.8"
 
 repositories {
     mavenCentral()
@@ -34,7 +34,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("213")
-        untilBuild.set("241.*")
+        untilBuild.set("242.*")
     }
 
     signPlugin {
