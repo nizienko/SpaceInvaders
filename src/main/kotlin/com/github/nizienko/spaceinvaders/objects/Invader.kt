@@ -1,9 +1,9 @@
 package com.github.nizienko.spaceinvaders.objects
 
-import com.github.nizienko.spaceinvaders.CanExpired
+
 import java.awt.Point
 import java.util.concurrent.ThreadLocalRandom
-import kotlin.random.Random
+
 
 class Invader(private val shiftX: Int, private val shiftY: Int, private val n: Int) : GameObject() {
     private var x: Int = 10 + shiftX

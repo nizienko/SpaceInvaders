@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskListener
@@ -29,9 +28,10 @@ internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, Dumb
 
         val show: () -> Unit = {
             statusBar.addWidget(
-                    widget,
-                    StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL),
-                    project)
+                widget,
+                StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL),
+                project
+            )
         }
 
         val hide: () -> Unit = {
@@ -131,18 +131,18 @@ internal class SpaceInvadersWidget : IconLikeCustomStatusBarWidget {
 
     override fun getComponent(): JComponent {
         return IconLabelButton(MyIcons.Monster) {
-            DataManager.getInstance().getDataContextFromFocusAsync().onSuccess { dataContext ->
+            DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
                 ActionManager.getInstance().getAction("com.github.nizienko.spaceinvaders.OpenGameAction")
-                        .actionPerformed(
-                            AnActionEvent(
-                                null,
-                                dataContext,
-                                ActionPlaces.UNKNOWN,
-                                Presentation(),
-                                ActionManager.getInstance(),
-                                0
-                            )
+                    .actionPerformed(
+                        AnActionEvent(
+                            null,
+                            dataContext,
+                            ActionPlaces.UNKNOWN,
+                            Presentation(),
+                            ActionManager.getInstance(),
+                            0
                         )
+                    )
             }
         }
     }

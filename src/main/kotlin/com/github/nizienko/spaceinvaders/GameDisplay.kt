@@ -1,13 +1,12 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.GameObject
-import java.awt.Color
+import com.jetbrains.rd.util.ConcurrentHashMap
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
 import javax.swing.JPanel
 import kotlin.math.roundToInt
 
@@ -22,15 +21,15 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     }
 
     // this is fast but error can occur
-    private val gameObjects = mutableSetOf<GameObject>()
-    private val viewObjects = mutableSetOf<GameObject>()
+    private val gameObjects =  ConcurrentHashMap.newKeySet<GameObject>()//mutableSetOf<GameObject>()
+    private val viewObjects = ConcurrentHashMap.newKeySet<GameObject>()
 
     private val xMultiplier: Double
         get() = (width.toDouble() / gameWidth.toDouble())
     private val yMultiplier: Double
         get() = (height.toDouble() / gameHeight.toDouble())
 
-    fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
+     fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
         if (zoomable) {
             gameObjects.add(gameObject)
         } else {
@@ -44,11 +43,12 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
     }
 
     var defaultColors = Colors(1)
-    override fun paint(g: Graphics?) {
+
+    override fun paintComponent(g: Graphics?) {
         if (g != null && g is Graphics2D) {
             g.background = defaultColors.background
             g.clearRect(0, 0, width, height)
-            gameObjects.toList().forEach {
+            gameObjects.forEach {
                 val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
                 val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
                 val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
@@ -63,7 +63,7 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                     realHeight.roundToInt()
                 )
             }
-            viewObjects.toList().forEach {
+            viewObjects.forEach {
                 val realX = (it.position.x).toDouble() * xMultiplier
                 val realY = (it.position.y).toDouble() * yMultiplier
                 val realWidth = it.width.toDouble() * xMultiplier
@@ -79,15 +79,6 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
                 )
             }
         }
-    }
-
-    private fun Color.isColorBright(): Boolean {
-        // Calculate the luminance value
-        val luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
-
-        // Check if the luminance value is above a threshold
-        val brightnessThreshold = 0.8 // Adjust the threshold as desired
-        return luminance > brightnessThreshold
     }
 
     fun clean() {
