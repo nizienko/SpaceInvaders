@@ -1,6 +1,5 @@
 package com.github.nizienko.spaceinvaders
 
-import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State

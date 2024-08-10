@@ -2,10 +2,8 @@ package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.*
 import com.github.nizienko.spaceinvaders.objects.bonuses.Bonus
-import com.github.nizienko.spaceinvaders.objects.bonuses.BulletSpeed
 import com.github.nizienko.spaceinvaders.objects.bonuses.Healer
 import com.github.nizienko.spaceinvaders.objects.bonuses.HealerFull
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.FocusEvent
@@ -69,7 +67,7 @@ class Game {
     private val bonuses = GameObjects<Bonus>(display)
     private val animations = GameObjects<Animation>(display)
     private lateinit var health: ProgressLevel
-    private lateinit var bulletSpeed: ProgressLevel
+//    private lateinit var bulletSpeed: ProgressLevel
 
     private lateinit var spaceShip: SpaceShip
 
@@ -92,11 +90,11 @@ class Game {
                 health.value = value
             }
 
-        var spaceShipBulletSpeed
-            get() = bulletSpeed.value
-            set(value) {
-                bulletSpeed.value = value
-            }
+//        var spaceShipBulletSpeed
+//            get() = bulletSpeed.value
+//            set(value) {
+//                bulletSpeed.value = value
+//            }
 
         fun shakeCamera(value: Double) {
             display.camera.zoom -= value
@@ -122,8 +120,8 @@ class Game {
     }
 
     private fun prepareNewGame() {
-        health = ProgressLevel("health", Point(300, 65), 100, 0, 100)
-        bulletSpeed = ProgressLevel("bullet speed", Point(300, 20), 20, 20, 60)
+        health = ProgressLevel("health", Point(300, 20), 100, 0, 100)
+//        bulletSpeed = ProgressLevel("bullet speed", Point(300, 20), 20, 20, 60)
         level = 0
         killedCount = 0
         killedRecord = SpaceInvadersState.getInstance().recordKills
@@ -134,7 +132,7 @@ class Game {
         level++
         display.clean()
         display.addObject(health, false)
-        display.addObject(bulletSpeed, false)
+//        display.addObject(bulletSpeed, false)
         display.addObject(killedCounterText, false)
         display.addObject(killedRecordText, false)
         with(display.camera) {
@@ -143,7 +141,7 @@ class Game {
         }
         colors = Colors(level)
         health.defaultColours = colors
-        bulletSpeed.defaultColours = colors
+//        bulletSpeed.defaultColours = colors
         centerText.defaultColours = colors
         levelText.defaultColours = colors
         bottomText.defaultColours = colors
@@ -182,8 +180,8 @@ class Game {
         bonuses.clear()
         spaceShip = SpaceShip(750, 1400, display.gameWidth).apply {
             fireFunction = { x, y ->
-                val bullet = Bullet(x, y - spaceShip.height / 2, speed = gameModifiers.spaceShipBulletSpeed)
-                bullet.defaultColours = colors
+                val bullet = Bullet(x, y - spaceShip.height / 2)
+//                bullet.defaultColours = colors
                 spaceShipBullets.add(bullet)
             }
             defaultColours = colors
@@ -240,9 +238,9 @@ class Game {
                     } else if ((Random.nextInt(90) == 1)) {
                         bonuses.add(HealerFull(i.position.x, i.position.y, display.gameHeight))
                     }
-                    if (Random.nextInt(45) == 1) {
-                        bonuses.add(BulletSpeed(i.position.x, i.position.y, display.gameHeight))
-                    }
+//                    if (Random.nextInt(45) == 1) {
+//                        bonuses.add(BulletSpeed(i.position.x, i.position.y, display.gameHeight))
+//                    }
                 }
             }
         }
@@ -278,10 +276,10 @@ class Game {
         }
         animations.forEach { it.process() }
 
-        if (lastTimeBulletSpeedDecreased + 10_000 < System.currentTimeMillis()) {
-            lastTimeBulletSpeedDecreased = System.currentTimeMillis()
-            bulletSpeed.value -= 2
-        }
+//        if (lastTimeBulletSpeedDecreased + 10_000 < System.currentTimeMillis()) {
+//            lastTimeBulletSpeedDecreased = System.currentTimeMillis()
+//            bulletSpeed.value -= 2
+//        }
 
         // clean
         invadersBullets.deleteExpired()

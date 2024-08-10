@@ -1,9 +1,11 @@
 package com.github.nizienko.spaceinvaders
 
+import com.github.nizienko.spaceinvaders.widget.SpaceInvadersWidgetModel
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
@@ -11,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskListener
 import com.intellij.task.ProjectTaskManager
@@ -20,22 +21,20 @@ import icons.MyIcons
 import javax.swing.JComponent
 
 
+@Deprecated("Do not use StartupActivity")
 internal class RegisterInvaderShowingInStatusBarActivity : StartupActivity, DumbAware {
 
     override fun runActivity(project: Project) {
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        val widget = SpaceInvadersWidget()
+//        val statusBar = WindowManager.getInstance().getStatusBar(project)
+//        val widget = SpaceInvadersWidget()
 
+        val widgetService = service<SpaceInvadersWidgetModel>()
         val show: () -> Unit = {
-            statusBar.addWidget(
-                widget,
-                StatusBar.Anchors.before(StatusBar.StandardWidgets.POSITION_PANEL),
-                project
-            )
+            widgetService.show()
         }
 
         val hide: () -> Unit = {
-            statusBar.removeWidget(widget.ID())
+            widgetService.hide()
         }
 
         subscribeToDumbMode(project, show, hide)

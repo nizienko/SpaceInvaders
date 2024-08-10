@@ -15,7 +15,7 @@ class BulletSpeed(x: Int, y: Int, maxY: Int) : Bonus(x, y, maxY) {
     }
 
     override fun applyBonus(gameModifiers: Game.GameModifiers) {
-        gameModifiers.spaceShipBulletSpeed += BULLET_SPEED_BONUS
+//        gameModifiers.spaceShipBulletSpeed += BULLET_SPEED_BONUS
     }
 
     override val width: Int
