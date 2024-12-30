@@ -36,7 +36,6 @@ class Game {
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == KeyEvent.VK_LEFT) {
-                    println("KEY_PRESSED")
                     if (gameState == GameState.PLAY || gameState == GameState.WIN) {
                         spaceShip.moveLeft()
                     }

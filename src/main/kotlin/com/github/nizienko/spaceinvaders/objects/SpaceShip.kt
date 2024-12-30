@@ -125,7 +125,6 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
         if (phase > 3) {
             phase = 0
         }
-        println(shootLag)
         // moving
         if (isFire) {
             if (nextFire > 0) {
