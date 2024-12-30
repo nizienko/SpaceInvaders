@@ -88,26 +88,54 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
     }
 
     private var acceleration: Double = 0.0
+    private var direction: Direction = Direction.STOP
+
+    enum class Direction {
+        LEFT, RIGHT, STOP
+    }
 
     fun moveLeft() {
-        acceleration -= 10
+        direction = Direction.LEFT
+
+        acceleration = -15.0
+    }
+
+    fun stopLeft() {
+        if (direction == Direction.LEFT) {
+            direction = Direction.STOP
+        }
     }
 
     fun moveRight() {
-        acceleration += 10
+        direction = Direction.RIGHT
+        acceleration = 15.0
     }
 
+    fun stopRight() {
+        if (direction == Direction.RIGHT) {
+            direction = Direction.STOP
+        }
+    }
+
+    var shootLag = 0
+    private var nextFire = 0
     private var phase = 0
     override fun process() {
         phase++
         if (phase > 3) {
             phase = 0
         }
+        println(shootLag)
         // moving
         if (isFire) {
-            fireFunction(position.x, position.y)
-            isFire = false
+            if (nextFire > 0) {
+                fireFunction(position.x, position.y)
+                nextFire = (shootLag) * -1
+            }
         }
+        nextFire++
+        if (nextFire > 10) nextFire = 10
+
         val newX = x + acceleration
         x = if (newX > width / 2 && newX < maxX - width / 2) {
             newX.roundToInt()
@@ -118,10 +146,12 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
             acceleration = 0.0
             maxX - width / 2
         }
-        if (acceleration > 0) {
-            acceleration -= 0.5
-        } else if (acceleration < 0) {
-            acceleration += 0.5
+        if (direction == Direction.STOP) {
+            if (acceleration > 0) {
+                acceleration -= 5
+            } else if (acceleration < 0) {
+                acceleration += 5
+            }
         }
     }
 
@@ -142,16 +172,12 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
     }
 
     private var lastBulletTime = System.currentTimeMillis()
-    fun fire() {
-        if (System.currentTimeMillis() - lastBulletTime > 800 - totalKilled) {
-            isFire = true
-            lastBulletTime = System.currentTimeMillis()
-        }
+    fun fire(on: Boolean) {
+        isFire = on
     }
 
     private var isFire = false
 
     var isKilled = false
     var fireFunction: (x: Int, y: Int) -> Unit = { _, _ -> }
-    var totalKilled: Int = 0
 }

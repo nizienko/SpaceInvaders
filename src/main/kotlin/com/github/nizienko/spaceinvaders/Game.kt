@@ -34,26 +34,37 @@ class Game {
         })
         isFocusable = true
         addKeyListener(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent?) {
-                if (e != null) {
-                    if (e.keyCode == KeyEvent.VK_LEFT) {
-                        if (gameState == GameState.PLAY || gameState == GameState.WIN) {
-                            spaceShip.moveLeft()
-                        }
+            override fun keyPressed(e: KeyEvent) {
+                if (e.keyCode == KeyEvent.VK_LEFT) {
+                    println("KEY_PRESSED")
+                    if (gameState == GameState.PLAY || gameState == GameState.WIN) {
+                        spaceShip.moveLeft()
                     }
-                    if (e.keyCode == KeyEvent.VK_RIGHT) {
-                        if (gameState == GameState.PLAY || gameState == GameState.WIN) {
-                            spaceShip.moveRight()
-                        }
+                }
+                if (e.keyCode == KeyEvent.VK_RIGHT) {
+                    if (gameState == GameState.PLAY || gameState == GameState.WIN) {
+                        spaceShip.moveRight()
                     }
-                    if (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_X) {
-                        if (gameState == GameState.PLAY) {
-                            spaceShip.fire()
-                        }
+                }
+                if (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_X) {
+                    if (gameState == GameState.PLAY) {
+                        spaceShip.fire(true)
                     }
-                    if (e.keyCode == KeyEvent.VK_SPACE) {
-                        spacePressed()
-                    }
+                }
+                if (e.keyCode == KeyEvent.VK_SPACE) {
+                    spacePressed()
+                }
+            }
+
+            override fun keyReleased(e: KeyEvent) {
+                if (e.keyCode == KeyEvent.VK_LEFT) {
+                    spaceShip.stopLeft()
+                }
+                if (e.keyCode == KeyEvent.VK_RIGHT) {
+                    spaceShip.stopRight()
+                }
+                if (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_X) {
+                    spaceShip.fire(false)
                 }
             }
         })
@@ -185,7 +196,6 @@ class Game {
                 spaceShipBullets.add(bullet)
             }
             defaultColours = colors
-            this.totalKilled = killedCount
         }
         display.camera.process(spaceShip.position)
 
@@ -224,7 +234,6 @@ class Game {
                     b.isOut = true
                     i.isKilled = true
                     killedCount++
-                    spaceShip.totalKilled = killedCount
                     val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
@@ -290,6 +299,7 @@ class Game {
 
         // set speed
         invadersMovements.xSpeed = 5 - (invaders.count().toDouble() / 10) + level
+        spaceShip.shootLag = getShootLag(level)
         // win?
         if (invaders.isEmpty()) {
             gameState = GameState.WIN
@@ -357,6 +367,16 @@ class Game {
     private fun gameOver() {
         gameState = GameState.GAME_OVER
         display.camera.zoomTarget = 0.6
+    }
+
+    private fun getShootLag(level: Int): Int {
+        if (level < 5) return 28
+        if (level < 8) return 20
+        if (level < 10) return 15
+        if (level < 13) return 10
+        if (level < 15) return 13
+        if (level < 30) return 10
+        return 5
     }
 }
 
