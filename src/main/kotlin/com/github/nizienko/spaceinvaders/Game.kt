@@ -373,10 +373,10 @@ class Game {
         if (level < 5) return 28
         if (level < 8) return 20
         if (level < 10) return 15
-        if (level < 13) return 10
-        if (level < 15) return 13
-        if (level < 30) return 10
-        return 5
+        if (level < 13) return 12
+        if (level < 15) return 10
+        if (level < 22) return 8
+        return 4
     }
 }
 
