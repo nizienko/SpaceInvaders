@@ -2,8 +2,6 @@ package com.github.nizienko.spaceinvaders.objects.bonuses
 
 import com.github.nizienko.spaceinvaders.Game
 import com.github.nizienko.spaceinvaders.objects.GameObject
-import java.awt.Point
-
 abstract class Bonus(protected var positionX: Int, protected var positionY: Int, private val maxY: Int) : GameObject() {
     companion object {
         const val SPEED = 13
@@ -16,8 +14,10 @@ abstract class Bonus(protected var positionX: Int, protected var positionY: Int,
         if (positionY >= maxY) out = true
     }
 
-    override val position: Point
-        get() = Point(positionX, positionY)
+    override val x: Int
+        get() = positionX
+    override val y: Int
+        get() = positionY
 
     override fun isExpired(): Boolean = isOut()
 

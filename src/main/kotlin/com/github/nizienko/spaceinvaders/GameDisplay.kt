@@ -1,18 +1,27 @@
 package com.github.nizienko.spaceinvaders
 
 import com.github.nizienko.spaceinvaders.objects.GameObject
-import com.jetbrains.rd.util.ConcurrentHashMap
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.beans.PropertyChangeListener
 import javax.swing.JPanel
+import javax.swing.UIManager
 import kotlin.math.roundToInt
 
 
 class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
+    var onThemeChanged: (() -> Unit)? = null
+    private val themeChangeListener = PropertyChangeListener { event ->
+        if (event.propertyName == "lookAndFeel") {
+            onThemeChanged?.invoke()
+            repaint()
+        }
+    }
+
     init {
+        UIManager.addPropertyChangeListener(themeChangeListener)
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent?) {
                 requestFocusInWindow()
@@ -20,9 +29,9 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         })
     }
 
-    // this is fast but error can occur
-    private val gameObjects =  ConcurrentHashMap.newKeySet<GameObject>()//mutableSetOf<GameObject>()
-    private val viewObjects = ConcurrentHashMap.newKeySet<GameObject>()
+    // All game state is updated and painted on the EDT, so ordered mutable lists are sufficient.
+    private val gameObjects = ArrayList<GameObject>()
+    private val viewObjects = ArrayList<GameObject>()
 
     private val xMultiplier: Double
         get() = (width.toDouble() / gameWidth.toDouble())
@@ -30,10 +39,9 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         get() = (height.toDouble() / gameHeight.toDouble())
 
      fun addObject(gameObject: GameObject, zoomable: Boolean = true) {
-        if (zoomable) {
-            gameObjects.add(gameObject)
-        } else {
-            viewObjects.add(gameObject)
+        val objects = if (zoomable) gameObjects else viewObjects
+        if (gameObject !in objects) {
+            objects.add(gameObject)
         }
     }
 
@@ -49,49 +57,50 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
             g.background = defaultColors.background
             g.clearRect(0, 0, width, height)
             gameObjects.forEach {
-                val realX = (it.position.x - camera.position.x).toDouble() * xMultiplier * camera.zoom
-                val realY = (it.position.y - camera.position.y).toDouble() * yMultiplier * camera.zoom
+                val realX = (it.x - camera.x).toDouble() * xMultiplier * camera.zoom
+                val realY = (it.y - camera.y).toDouble() * yMultiplier * camera.zoom
                 val realWidth = it.width.toDouble() * xMultiplier * camera.zoom
                 val realHeight = it.height.toDouble() * yMultiplier * camera.zoom
-                it.paint(
-                    g,
-                    Point(
-                        realX.roundToInt() - (realWidth / 2).roundToInt(),
-                        realY.roundToInt() - (realHeight / 2).roundToInt()
-                    ),
-                    realWidth.roundToInt(),
-                    realHeight.roundToInt()
-                )
+                val objectWidth = realWidth.roundToInt()
+                val objectHeight = realHeight.roundToInt()
+                val objectX = realX.roundToInt() - objectWidth / 2
+                val objectY = realY.roundToInt() - objectHeight / 2
+                if (objectX < width && objectY < height && objectX + objectWidth > 0 && objectY + objectHeight > 0) {
+                    it.paint(g, objectX, objectY, objectWidth, objectHeight)
+                }
             }
             viewObjects.forEach {
-                val realX = (it.position.x).toDouble() * xMultiplier
-                val realY = (it.position.y).toDouble() * yMultiplier
+                val realX = it.x.toDouble() * xMultiplier
+                val realY = it.y.toDouble() * yMultiplier
                 val realWidth = it.width.toDouble() * xMultiplier
                 val realHeight = it.height.toDouble() * yMultiplier
-                it.paint(
-                    g,
-                    Point(
-                        realX.roundToInt() - (realWidth / 2).roundToInt(),
-                        realY.roundToInt() - (realHeight / 2).roundToInt()
-                    ),
-                    realWidth.roundToInt(),
-                    realHeight.roundToInt()
-                )
+                val objectWidth = realWidth.roundToInt()
+                val objectHeight = realHeight.roundToInt()
+                val objectX = realX.roundToInt() - objectWidth / 2
+                val objectY = realY.roundToInt() - objectHeight / 2
+                if (objectX < width && objectY < height && objectX + objectWidth > 0 && objectY + objectHeight > 0) {
+                    it.paint(g, objectX, objectY, objectWidth, objectHeight)
+                }
             }
         }
     }
 
     fun clean() {
         gameObjects.clear()
+        viewObjects.clear()
+    }
+
+    fun dispose() {
+        UIManager.removePropertyChangeListener(themeChangeListener)
     }
 
     val camera = Camera(gameWidth, gameHeight)
 
     class Camera(private val gameWidth: Int, private val gameHeight: Int) {
-        val position: Point
-            get() = Point(x, y)
-        private var x: Int = 0
-        private var y: Int = 0
+        var x: Int = 0
+            private set
+        var y: Int = 0
+            private set
         var zoom: Double = 1.0
         var zoomTarget = 1.0
         val width
@@ -100,9 +109,9 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
             get() = (gameHeight.toDouble() / zoom).roundToInt()
 
 
-        fun process(position: Point) {
-            var newX = position.x - width / 2
-            var newY = position.y - height / 2
+        fun process(positionX: Int, positionY: Int) {
+            var newX = positionX - width / 2
+            var newY = positionY - height / 2
             if (newX < 0) newX = 0
             if (newX + width > gameWidth) newX = gameWidth - width
             if (newY < 0) newY = 0
@@ -121,6 +130,4 @@ class GameDisplay(val gameWidth: Int, val gameHeight: Int) : JPanel() {
         }
     }
 }
-
-
 

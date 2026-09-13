@@ -5,7 +5,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import javax.swing.UIManager
 
-class Colors(private val level: Int) {
+class Colors(level: Int) {
     companion object {
         private val GameObjectColorsLight = listOf(
             Color.DARK_GRAY,
@@ -31,22 +31,24 @@ class Colors(private val level: Int) {
         private val BackgroundColorsDark = Color(43, 43, 43)
     }
 
-    val gameObject: Color
-        get() = themeBasedColor(
-            level - 1,
-            GameObjectColorsLight,
-            GameObjectColorsDark,
-        ) {
-            UIUtil.getLabelInfoForeground()
-        }
-
-    val background: Color
-        get() = themeBasedColor(
-            BackgroundColorsLight,
-            BackgroundColorsDark
-        ) {
-            UIUtil.getLabelBackground()
-        }
+    // Theme APIs are comparatively expensive. Resolve the palette once when a
+    // level starts (or when the look and feel changes), never while painting.
+    val gameObject: Color = themeBasedColor(
+        level - 1,
+        GameObjectColorsLight,
+        GameObjectColorsDark,
+    ) {
+        UIUtil.getLabelInfoForeground()
+    }
+    val gameObjectBrighter: Color = gameObject.brighter()
+    val gameObjectBrighterTwice: Color = gameObjectBrighter.brighter()
+    val gameObjectDarker: Color = gameObject.darker()
+    val background: Color = themeBasedColor(
+        BackgroundColorsLight,
+        BackgroundColorsDark
+    ) {
+        UIUtil.getLabelBackground()
+    }
 }
 
 private val theme: String

@@ -1,9 +1,8 @@
 package com.github.nizienko.spaceinvaders.objects
 
-import java.awt.Point
-
 class InvadersDeathAnimation(x: Int, y: Int) : Animation() {
-    override val position: Point = Point(x, y)
+    override val x = x
+    override val y = y
     override val width: Int = 70
     override val height: Int = 70
     override val pictureSizeX: Int = 110

@@ -1,16 +1,12 @@
 package com.github.nizienko.spaceinvaders.objects
 
-import java.awt.Point
-
 class Bullet(
-        private var x: Int,
-        private var y: Int,
+        override var x: Int,
+        override var y: Int,
         private val isDownDirection: Boolean = false,
         private val maxY: Int = 0,
         private val speed: Int = 30
 ) : GameObject() {
-    override val position: Point
-        get() = Point(x, y)
     override val width: Int = 5
     override val height: Int = 30
     override val pictureSizeX: Int = 1
@@ -43,9 +39,9 @@ class Bullet(
     }
 
     fun isMatchInvader(invader: Invader): Boolean {
-        return invader.position.x - invader.width / 2 <= position.x
-                && invader.position.x + invader.width / 2 >= position.x
-                && invader.position.y - invader.height / 2 <= position.y
-                && invader.position.y + invader.height / 2 >= position.y
+        return invader.x - invader.width / 2 <= x
+                && invader.x + invader.width / 2 >= x
+                && invader.y - invader.height / 2 <= y
+                && invader.y + invader.height / 2 >= y
     }
 }

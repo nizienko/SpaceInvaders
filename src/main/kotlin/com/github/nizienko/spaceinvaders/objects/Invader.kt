@@ -1,15 +1,12 @@
 package com.github.nizienko.spaceinvaders.objects
 
 
-import java.awt.Point
 import java.util.concurrent.ThreadLocalRandom
 
 
 class Invader(private val shiftX: Int, private val shiftY: Int, private val n: Int) : GameObject() {
-    private var x: Int = 10 + shiftX
-    private var y: Int = 10 + shiftY
-    override val position: Point
-        get() = Point(x, y)
+    override var x: Int = 10 + shiftX
+    override var y: Int = 10 + shiftY
     override val width: Int = 70
     override val height: Int = 70
 
@@ -64,9 +61,9 @@ class Invader(private val shiftX: Int, private val shiftY: Int, private val n: I
     }
 
 
-    fun move(point: Point) {
-        x = point.x + shiftX
-        y = point.y + shiftY
+    fun move(originX: Int, originY: Int) {
+        x = originX + shiftX
+        y = originY + shiftY
     }
 
     var isKilled: Boolean = false

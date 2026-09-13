@@ -5,13 +5,13 @@ import com.github.nizienko.spaceinvaders.objects.bonuses.Bonus
 import com.github.nizienko.spaceinvaders.objects.bonuses.Healer
 import com.github.nizienko.spaceinvaders.objects.bonuses.HealerFull
 import java.awt.Component
-import java.awt.Point
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.JFrame
-import kotlin.concurrent.thread
+import javax.swing.SwingUtilities
+import javax.swing.Timer
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -82,6 +82,7 @@ class Game {
     private lateinit var spaceShip: SpaceShip
 
     private var gameOverTime: Long = 0L
+    private var gameTimer: Timer? = null
     private var level = 1
     private lateinit var colors: Colors
     private val centerText = Text(display.gameWidth / 2, 400, 100, 170)
@@ -115,6 +116,7 @@ class Game {
 
 
     init {
+        display.onThemeChanged = ::refreshColorsForCurrentTheme
         prepareNewGame()
     }
 
@@ -130,8 +132,8 @@ class Game {
     }
 
     private fun prepareNewGame() {
-        health = ProgressLevel("health", Point(300, 20), 100, 0, 100)
-//        bulletSpeed = ProgressLevel("bullet speed", Point(300, 20), 20, 20, 60)
+        health = ProgressLevel("health", 300, 20, 100, 0, 100)
+//        bulletSpeed = ProgressLevel("bullet speed", 300, 20, 20, 20, 60)
         level = 0
         killedCount = 0
         killedRecord = SpaceInvadersState.getInstance().recordKills
@@ -149,15 +151,7 @@ class Game {
             zoom = 1.8
             zoomTarget = 1.0
         }
-        colors = Colors(level)
-        health.defaultColours = colors
-//        bulletSpeed.defaultColours = colors
-        centerText.defaultColours = colors
-        levelText.defaultColours = colors
-        bottomText.defaultColours = colors
-        bottomText2.defaultColours = colors
-        killedCounterText.defaultColours = colors
-        killedRecordText.defaultColours = colors
+        refreshColorsForCurrentTheme()
         display.addObject(levelText, false)
         levelText.text = "level $level"
         bottomText.text = "press space to start"
@@ -172,7 +166,7 @@ class Game {
                 (0..4).forEach { r ->
                     val invader = Invader(c * 100, r * 100 + 100, n)
                     n++
-                    invader.move(invadersMovements.getPoint())
+                    invader.move(invadersMovements.x, invadersMovements.y)
                     invader.totalInvadersLeft = invaders.size
                     invader.defaultColours = colors
                     invader.fire = { x, y ->
@@ -191,15 +185,14 @@ class Game {
         spaceShip = SpaceShip(750, 1400, display.gameWidth).apply {
             fireFunction = { x, y ->
                 val bullet = Bullet(x, y - spaceShip.height / 2)
-//                bullet.defaultColours = colors
+                bullet.defaultColours = colors
                 spaceShipBullets.add(bullet)
             }
             defaultColours = colors
         }
-        display.camera.process(spaceShip.position)
+        display.camera.process(spaceShip.x, spaceShip.y)
 
         display.addObject(spaceShip)
-        display.defaultColors = colors
         display.addObject(centerText, false)
         display.addObject(bottomText, false)
         display.addObject(bottomText2, false)
@@ -218,22 +211,24 @@ class Game {
             it.process()
         }
         invadersMovements.move()
+        val invadersOriginX = invadersMovements.x
+        val invadersOriginY = invadersMovements.y
         invaders.forEach {
-            it.move(invadersMovements.getPoint())
+            it.move(invadersOriginX, invadersOriginY)
             it.process()
             it.totalInvadersLeft = invaders.size
         }
         bonuses.forEach { it.process() }
         spaceShip.process()
-        display.camera.process(spaceShip.position)
+        display.camera.process(spaceShip.x, spaceShip.y)
         // check collisions
-        spaceShipBullets.forEach { b ->
-            invaders.forEach { i ->
-                if (b.isMatchInvader(i)) {
-                    b.isOut = true
-                    i.isKilled = true
+        for (bullet in spaceShipBullets) {
+            for (invader in invaders) {
+                if (!invader.isKilled && bullet.isMatchInvader(invader)) {
+                    bullet.isOut = true
+                    invader.isKilled = true
                     killedCount++
-                    val invadersDeathAnimation = InvadersDeathAnimation(b.position.x, b.position.y)
+                    val invadersDeathAnimation = InvadersDeathAnimation(bullet.x, bullet.y)
                     invadersDeathAnimation.defaultColours = colors
                     animations.add(invadersDeathAnimation)
                     display.camera.zoom += 0.7 / invaders.size.toDouble() / 15.0
@@ -242,19 +237,20 @@ class Game {
                         SpaceInvadersState.getInstance().recordKills = killedCount
                     }
                     if (Random.nextInt(55) == 1) {
-                        bonuses.add(Healer(i.position.x, i.position.y, display.gameHeight))
+                        bonuses.add(Healer(invader.x, invader.y, display.gameHeight).apply { defaultColours = colors })
                     } else if ((Random.nextInt(90) == 1)) {
-                        bonuses.add(HealerFull(i.position.x, i.position.y, display.gameHeight))
+                        bonuses.add(HealerFull(invader.x, invader.y, display.gameHeight).apply { defaultColours = colors })
                     }
 //                    if (Random.nextInt(45) == 1) {
-//                        bonuses.add(BulletSpeed(i.position.x, i.position.y, display.gameHeight))
+//                        bonuses.add(BulletSpeed(invader.x, invader.y, display.gameHeight))
 //                    }
+                    break
                 }
             }
         }
         invadersBullets.forEach { b ->
             if (spaceShip.isObjectHit(b)) {
-                val spaceShipExplosion = SpaceShipExplosionAnimation(b.position.x, b.position.y)
+                val spaceShipExplosion = SpaceShipExplosionAnimation(b.x, b.y)
                 animations.add(spaceShipExplosion)
                 display.camera.zoom += 0.01
                 b.isOut = true
@@ -266,7 +262,7 @@ class Game {
                 }
             }
         }
-        if (invaders.any { it.position.y > spaceShip.position.y - spaceShip.height / 2 }) {
+        if (invaders.any { it.y > spaceShip.y - spaceShip.height / 2 }) {
             if (gameState == GameState.GAME_OVER) {
                 if (System.currentTimeMillis() - gameOverTime > 10000) {
                     prepareNewGame()
@@ -297,7 +293,7 @@ class Game {
         spaceShipBullets.deleteExpired()
 
         // set speed
-        invadersMovements.xSpeed = 5 - (invaders.count().toDouble() / 10) + level
+        invadersMovements.xSpeed = 5 - (invaders.size.toDouble() / 10) + level
         spaceShip.shootLag = getShootLag(level)
         // win?
         if (invaders.isEmpty()) {
@@ -309,58 +305,93 @@ class Game {
     }
 
     fun startGame() {
-        thread(name = "SpaceInvaders-Game") {
-            while (gameState != GameState.EXITED) {
-                when (gameState) {
-                    GameState.PLAY, GameState.GAME_OVER, GameState.WIN -> process()
-                    else -> {}
-                }
-                Thread.sleep(1000L / (FRAME_RATE))
-            }
-        }
-        thread(name = "SpaceInvaders-UI") {
-            while (gameState != GameState.EXITED) {
-                when (gameState) {
-                    GameState.NEW -> {
-                        centerText.text = "level $level"
-                        bottomText.text = "press SPACE"
-                        display.repaint()
-                    }
+        runOnEdt {
+            if (gameState == GameState.EXITED || gameTimer?.isRunning == true) return@runOnEdt
 
-                    GameState.PLAY -> {
-                        centerText.text = ""
-                        bottomText.text = ""
-                        bottomText2.text = ""
-                        display.repaint()
-                    }
-
-                    GameState.PAUSE -> {
-                        bottomText2.text = "pause"
-                        display.repaint()
-                    }
-
-                    GameState.GAME_OVER -> {
-                        centerText.text = "game over"
-                        bottomText.text = "$killedCount killed"
-                        display.repaint()
-                    }
-
-                    GameState.WIN -> {
-                        centerText.text = "win!"
-                        bottomText.text = "press SPACE for next level"
-                        display.repaint()
-                    }
-
-                    GameState.EXITED -> break
-                }
-                val sleep = 1000L / FRAME_RATE
-                Thread.sleep(sleep)
+            gameTimer = Timer(1000 / FRAME_RATE) {
+                processFrame()
+            }.apply {
+                isCoalesce = true
+                start()
             }
         }
     }
 
     fun exitGame() {
-        gameState = GameState.EXITED
+        runOnEdt {
+            gameState = GameState.EXITED
+            gameTimer?.stop()
+            gameTimer = null
+            display.dispose()
+        }
+    }
+
+    private fun refreshColorsForCurrentTheme() {
+        if (level == 0) return
+
+        colors = Colors(level)
+        display.defaultColors = colors
+        health.defaultColours = colors
+        centerText.defaultColours = colors
+        levelText.defaultColours = colors
+        bottomText.defaultColours = colors
+        bottomText2.defaultColours = colors
+        killedCounterText.defaultColours = colors
+        killedRecordText.defaultColours = colors
+        invaders.forEach { it.defaultColours = colors }
+        spaceShipBullets.forEach { it.defaultColours = colors }
+        invadersBullets.forEach { it.defaultColours = colors }
+        bonuses.forEach { it.defaultColours = colors }
+        animations.forEach { it.defaultColours = colors }
+        if (::spaceShip.isInitialized) spaceShip.defaultColours = colors
+    }
+
+    private fun processFrame() {
+        check(SwingUtilities.isEventDispatchThread()) { "Game frames must run on the EDT" }
+
+        when (gameState) {
+            GameState.PLAY, GameState.GAME_OVER, GameState.WIN -> process()
+            else -> {}
+        }
+        updateUi()
+        display.repaint()
+    }
+
+    private fun updateUi() {
+        when (gameState) {
+            GameState.NEW -> {
+                centerText.text = "level $level"
+                bottomText.text = "press SPACE"
+            }
+
+            GameState.PLAY -> {
+                centerText.text = ""
+                bottomText.text = ""
+                bottomText2.text = ""
+            }
+
+            GameState.PAUSE -> bottomText2.text = "pause"
+
+            GameState.GAME_OVER -> {
+                centerText.text = "game over"
+                bottomText.text = "$killedCount killed"
+            }
+
+            GameState.WIN -> {
+                centerText.text = "win!"
+                bottomText.text = "press SPACE for next level"
+            }
+
+            GameState.EXITED -> {}
+        }
+    }
+
+    private fun runOnEdt(action: () -> Unit) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            action()
+        } else {
+            SwingUtilities.invokeLater(action)
+        }
     }
 
     private fun gameOver() {
@@ -380,9 +411,11 @@ class Game {
 }
 
 fun main() {
-    val game = Game()
-    createDemoUI(game.display)
-    game.startGame()
+    SwingUtilities.invokeLater {
+        val game = Game()
+        createDemoUI(game.display)
+        game.startGame()
+    }
 }
 
 fun createDemoUI(component: Component) {
@@ -397,8 +430,12 @@ fun createDemoUI(component: Component) {
 }
 
 class InvadersMovements {
-    private var x: Double = 101.0
-    private var y: Double = 101.0
+    private var rawX: Double = 101.0
+    private var rawY: Double = 101.0
+    val x: Int
+        get() = rawX.roundToInt()
+    val y: Int
+        get() = rawY.roundToInt()
     var xSpeed: Double = 4.0
     private val ySpeed: Int = 25
 
@@ -407,18 +444,16 @@ class InvadersMovements {
 
     private var direction = 1
 
-    fun getPoint() = Point(x.roundToInt(), y.roundToInt())
-
     fun move() {
-        if (x >= maxX) {
+        if (rawX >= maxX) {
             direction = -1
-            y += ySpeed
+            rawY += ySpeed
         }
-        if (x <= minX) {
+        if (rawX <= minX) {
             direction = 1
-            y += ySpeed
+            rawY += ySpeed
         }
-        x += direction * xSpeed
+        rawX += direction * xSpeed
     }
 }
 
@@ -431,20 +466,31 @@ interface CanExpired {
 }
 
 class GameObjects<T : GameObject>(private val display: GameDisplay) : Iterable<T> {
-    private val list = mutableSetOf<T>()
+    private val list = ArrayList<T>()
 
-    fun clear() = list.clear()
+    fun clear() {
+        list.forEach(display::removeObject)
+        list.clear()
+    }
     val size
         get() = list.size
 
     fun add(obj: T) {
-        list.add(obj)
-        display.addObject(obj)
+        if (obj !in list) {
+            list.add(obj)
+            display.addObject(obj)
+        }
     }
 
     fun deleteExpired() {
-        val listToDelete = list.filter { it.isExpired() }
-        listToDelete.forEach { remove(it) }
+        val iterator = list.iterator()
+        while (iterator.hasNext()) {
+            val obj = iterator.next()
+            if (obj.isExpired()) {
+                iterator.remove()
+                display.removeObject(obj)
+            }
+        }
     }
 
     override fun iterator(): Iterator<T> {

@@ -1,12 +1,12 @@
 package com.github.nizienko.spaceinvaders.objects
 
 import java.awt.Color
-import java.awt.Point
 
 class SpaceShipExplosionAnimation(x: Int, y: Int) : Animation() {
     override val durationMs: Long = 400L
 
-    override val position: Point = Point(x, y)
+    override val x = x
+    override val y = y
     override val width: Int = 100
     override val height: Int = 100
     override val pictureSizeX: Int = 40

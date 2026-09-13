@@ -6,7 +6,8 @@ import java.awt.*
 import kotlin.math.roundToInt
 
 abstract class GameObject : CanExpired {
-    abstract val position: Point
+    abstract val x: Int
+    abstract val y: Int
     abstract val width: Int
     abstract val height: Int
     abstract val pictureSizeX: Int
@@ -15,8 +16,10 @@ abstract class GameObject : CanExpired {
     abstract fun process()
     var defaultColours = Colors(1)
 
-    fun paint(graphics: Graphics2D, position: Point, width: Int, height: Int) {
-        val painter = Painter(pictureSizeX, pictureSizeY, graphics, position, width, height)
+    private val painter by lazy { Painter(pictureSizeX, pictureSizeY) }
+
+    fun paint(graphics: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
+        painter.reset(graphics, x, y, width, height)
         painter.picture()
     }
 }
@@ -25,13 +28,24 @@ abstract class GameObject : CanExpired {
 class Painter(
     sizeX: Int,
     sizeY: Int,
-    private val graphics: Graphics2D,
-    private val position: Point,
-    private val width: Int,
-    private val height: Int
 ) {
-    private val xMultiplier = this.width.toDouble() / sizeX.toDouble()
-    private val yMultiplier = this.height.toDouble() / sizeY.toDouble()
+    private val sizeX = sizeX.toDouble()
+    private val sizeY = sizeY.toDouble()
+    private lateinit var graphics: Graphics2D
+    private var positionX = 0
+    private var positionY = 0
+    private var xMultiplier = 1.0
+    private var yMultiplier = 1.0
+    private var polygonXs = IntArray(0)
+    private var polygonYs = IntArray(0)
+
+    fun reset(graphics: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
+        this.graphics = graphics
+        positionX = x
+        positionY = y
+        xMultiplier = width.toDouble() / sizeX
+        yMultiplier = height.toDouble() / sizeY
+    }
 
     fun color(color: Color) {
         graphics.color = color
@@ -39,24 +53,27 @@ class Painter(
 
     fun rect(x: Int, y: Int, width: Int, height: Int) {
         graphics.fillRect(
-            position.x + (x * xMultiplier).roundToInt(),
-            position.y + (y * yMultiplier).roundToInt(),
+            positionX + (x * xMultiplier).roundToInt(),
+            positionY + (y * yMultiplier).roundToInt(),
             (width * xMultiplier).roundToInt(),
             (height * yMultiplier).roundToInt()
         )
     }
 
-    fun polygon(vararg points: Point) {
-        val multipliedPoints = points.map {
-            Point(
-                position.x + (it.x * xMultiplier).roundToInt(),
-                position.y + (it.y * yMultiplier).roundToInt()
-            )
+    fun polygon(points: IntArray) {
+        val pointCount = points.size / 2
+        if (polygonXs.size < pointCount) {
+            polygonXs = IntArray(pointCount)
+            polygonYs = IntArray(pointCount)
+        }
+        for (index in 0 until pointCount) {
+            polygonXs[index] = positionX + (points[index * 2] * xMultiplier).roundToInt()
+            polygonYs[index] = positionY + (points[index * 2 + 1] * yMultiplier).roundToInt()
         }
         graphics.fillPolygon(
-            multipliedPoints.map { it.x }.toIntArray(),
-            multipliedPoints.map { it.y }.toIntArray(),
-            multipliedPoints.size
+            polygonXs,
+            polygonYs,
+            pointCount
         )
     }
 
@@ -64,8 +81,8 @@ class Painter(
         val w = (width * xMultiplier).roundToInt()
         val h = (height * yMultiplier).roundToInt()
         graphics.fillOval(
-            position.x + (x * xMultiplier).roundToInt() - w / 2,
-            position.y + (y * yMultiplier).roundToInt() - h / 2,
+            positionX + (x * xMultiplier).roundToInt() - w / 2,
+            positionY + (y * yMultiplier).roundToInt() - h / 2,
             w,
             h
         )
@@ -79,8 +96,8 @@ class Painter(
         val w = (width * xMultiplier).roundToInt()
         val h = (height * yMultiplier).roundToInt()
         graphics.drawArc(
-            position.x + (x * xMultiplier).roundToInt() - w / 2,
-            position.y + (y * yMultiplier).roundToInt() - h / 2,
+            positionX + (x * xMultiplier).roundToInt() - w / 2,
+            positionY + (y * yMultiplier).roundToInt() - h / 2,
             w,
             h,
             startAngle,
@@ -93,11 +110,11 @@ class Painter(
         graphics.font = graphics.font.deriveFont(fontSize.toFloat())
         val textWidth: Int = graphics.fontMetrics.stringWidth(text)
         val gx = if (center) {
-            position.x + (x * xMultiplier).roundToInt() - textWidth / 2
+            positionX + (x * xMultiplier).roundToInt() - textWidth / 2
         } else {
-            position.x + (x * xMultiplier).roundToInt()
+            positionX + (x * xMultiplier).roundToInt()
         }
-        val gy = position.y + (y * yMultiplier).roundToInt() + fontSize / 2
+        val gy = positionY + (y * yMultiplier).roundToInt() + fontSize / 2
         graphics.drawString(text, gx, gy)
     }
 }

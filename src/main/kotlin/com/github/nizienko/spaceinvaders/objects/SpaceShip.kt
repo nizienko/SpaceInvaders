@@ -1,38 +1,18 @@
 package com.github.nizienko.spaceinvaders.objects
 
 import java.awt.Color
-import java.awt.Point
 import kotlin.math.roundToInt
 
-class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
+class SpaceShip(override var x: Int, override var y: Int, private val maxX: Int) :
     GameObject() {
-    override val position: Point
-        get() = Point(x, y)
     override val width: Int = 130
     override val height: Int = 200
     override val pictureSizeX: Int = 16
     override val pictureSizeY: Int = 20
 
     override val picture: Painter.() -> Unit = {
-        color(defaultColours.gameObject.brighter())
-        polygon(
-            Point(7, 0),
-            Point(9, 0),
-            Point(10, 1),
-            Point(11, 8),
-            Point(16, 10),
-            Point(16, 16),
-            Point(11, 16),
-            Point(11, 14),
-            Point(9, 13),
-            Point(7, 13),
-            Point(5, 14),
-            Point(5, 16),
-            Point(0, 16),
-            Point(0, 10),
-            Point(5, 8),
-            Point(6, 1),
-        )
+        color(defaultColours.gameObjectBrighter)
+        polygon(BODY_POINTS)
         rect(7, 1, 2, 1)
         rect(6, 2, 4, 1)
         rect(7, 3, 2, 8)
@@ -49,7 +29,7 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
         rect(3, 8, 2, 7)
         rect(11, 8, 2, 7)
 
-        color(defaultColours.gameObject.darker())
+        color(defaultColours.gameObjectDarker)
         rect(7, 6, 2, 1)
         rect(7, 10, 2, 1)
         rect(5, 5, 1, 8)
@@ -63,27 +43,27 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
         rect(12, 15, 2, 1)
 
         if (phase < 2) {
-            color(Color(255, 115, 0))
-            polygon(Point(1, 16), Point(5, 16), Point(4, 18), Point(2, 18))
-            polygon(Point(11, 16), Point(15, 16), Point(14, 18), Point(12, 18))
-            color(Color(255, 196, 0))
+            color(FLAME_ORANGE)
+            polygon(LEFT_FLAME_POINTS)
+            polygon(RIGHT_FLAME_POINTS)
+            color(FLAME_YELLOW)
             rect(3, 16, 1, 2)
             rect(12, 16, 1, 2)
         } else {
-            color(Color(255, 196, 0))
-            polygon(Point(1, 16), Point(5, 16), Point(4, 18), Point(2, 18))
-            polygon(Point(11, 16), Point(15, 16), Point(14, 18), Point(12, 18))
-            color(Color(255, 115, 0))
+            color(FLAME_YELLOW)
+            polygon(LEFT_FLAME_POINTS)
+            polygon(RIGHT_FLAME_POINTS)
+            color(FLAME_ORANGE)
             rect(3, 16, 1, 2)
             rect(12, 16, 1, 2)
         }
-        color(Color(109, 109, 255))
+        color(COCKPIT_LIGHT)
         rect(7, 2, 2, 1)
 
-        color(Color(0, 0, 255))
+        color(COCKPIT_BLUE)
         rect(7, 3, 2, 2)
 
-        color(Color(0, 0, 185))
+        color(COCKPIT_DARK_BLUE)
         rect(7, 5, 2, 1)
     }
 
@@ -128,7 +108,7 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
         // moving
         if (isFire) {
             if (nextFire > 0) {
-                fireFunction(position.x, position.y)
+                fireFunction(x, y)
                 nextFire = (shootLag) * -1
             }
         }
@@ -158,16 +138,16 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
 
     fun isObjectHit(bullet: GameObject): Boolean {
         if (isKilled) return false
-        val bx = bullet.position.x
-        val by = bullet.position.y
-        return (bx >= position.x - width / 2
-                && bx <= position.x + width / 2
-                && by + bullet.height / 2 >= position.y
-                && by - bullet.height / 2 <= position.y + height / 2)
-                || (bx >= position.x - width / 4
-                && bx <= position.x + width / 4
-                && by + bullet.height / 2 >= position.y - height / 2
-                && by - bullet.height / 2 <= position.y + height / 2)
+        val bx = bullet.x
+        val by = bullet.y
+        return (bx >= x - width / 2
+                && bx <= x + width / 2
+                && by + bullet.height / 2 >= y
+                && by - bullet.height / 2 <= y + height / 2)
+                || (bx >= x - width / 4
+                && bx <= x + width / 4
+                && by + bullet.height / 2 >= y - height / 2
+                && by - bullet.height / 2 <= y + height / 2)
     }
 
     private var lastBulletTime = System.currentTimeMillis()
@@ -179,4 +159,18 @@ class SpaceShip(private var x: Int, private var y: Int, private val maxX: Int) :
 
     var isKilled = false
     var fireFunction: (x: Int, y: Int) -> Unit = { _, _ -> }
+
+    private companion object {
+        val FLAME_ORANGE = Color(255, 115, 0)
+        val FLAME_YELLOW = Color(255, 196, 0)
+        val COCKPIT_LIGHT = Color(109, 109, 255)
+        val COCKPIT_BLUE = Color(0, 0, 255)
+        val COCKPIT_DARK_BLUE = Color(0, 0, 185)
+        val BODY_POINTS = intArrayOf(
+            7, 0, 9, 0, 10, 1, 11, 8, 16, 10, 16, 16, 11, 16, 11, 14,
+            9, 13, 7, 13, 5, 14, 5, 16, 0, 16, 0, 10, 5, 8, 6, 1,
+        )
+        val LEFT_FLAME_POINTS = intArrayOf(1, 16, 5, 16, 4, 18, 2, 18)
+        val RIGHT_FLAME_POINTS = intArrayOf(11, 16, 15, 16, 14, 18, 12, 18)
+    }
 }
