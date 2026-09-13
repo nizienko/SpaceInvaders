@@ -4,7 +4,7 @@ import com.github.nizienko.spaceinvaders.widget.SpaceInvadersWidgetModel
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -131,17 +131,7 @@ internal class SpaceInvadersWidget : IconLikeCustomStatusBarWidget {
     override fun getComponent(): JComponent {
         return IconLabelButton(MyIcons.Monster) {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                ActionManager.getInstance().getAction("com.github.nizienko.spaceinvaders.OpenGameAction")
-                    .actionPerformed(
-                        AnActionEvent(
-                            null,
-                            dataContext,
-                            ActionPlaces.UNKNOWN,
-                            Presentation(),
-                            ActionManager.getInstance(),
-                            0
-                        )
-                    )
+                openGame(CommonDataKeys.PROJECT.getData(dataContext))
             }
         }
     }

@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.0.10"
-    id("org.jetbrains.intellij.platform") version "2.7.0"
+    id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
 group = "com.github.nizienko"
@@ -17,9 +17,12 @@ repositories {
 dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2025.1")
-        instrumentationTools()
         pluginVerifier()
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 intellijPlatform {

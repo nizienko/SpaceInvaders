@@ -1,10 +1,6 @@
 package com.github.nizienko.spaceinvaders.widget
 
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.github.nizienko.spaceinvaders.openGame
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -27,31 +23,19 @@ internal class InvadersWidgetFactory : StatusBarWidgetFactory {
     }
 
     override fun createWidget(project: Project): StatusBarWidget {
-        return InvadersWidget()
+        return InvadersWidget(project)
     }
 
 }
 
-internal class InvadersWidget : CustomStatusBarWidget {
+internal class InvadersWidget(private val project: Project) : CustomStatusBarWidget {
     override fun ID(): String {
         return "invaders.widget"
     }
 
     override fun getComponent(): JComponent {
         return IconLabelButton(MyIcons.Monster) {
-            DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                ActionManager.getInstance().getAction("com.github.nizienko.spaceinvaders.OpenGameAction")
-                    .actionPerformed(
-                        AnActionEvent(
-                            null,
-                            dataContext,
-                            ActionPlaces.UNKNOWN,
-                            Presentation(),
-                            ActionManager.getInstance(),
-                            0
-                        )
-                    )
-            }
+            openGame(project)
         }.bindVisible(service<SpaceInvadersWidgetModel>().showWidget)
     }
 }
